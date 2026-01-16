@@ -1,0 +1,7 @@
+﻿src/components/calculator/Calculator.tsx(69,41): error TS2345: Argument of type '{ warehouse: "HN" | "HCM"; method: "TMDT" | "TieuNgach" | "ChinhNgach"; deposit: 70 | 80; products: { id?: string | undefined; quantity?: number | undefined; price_cny?: number | undefined; name?: string | undefined; link?: string | undefined; negotiated_price_cny?: number | undefined; weight_kg?: number | undefined...' is not assignable to parameter of type 'OrderDetails'.
+  Types of property 'products' are incompatible.
+    Type '{ id?: string | undefined; quantity?: number | undefined; price_cny?: number | undefined; name?: string | undefined; link?: string | undefined; negotiated_price_cny?: number | undefined; weight_kg?: number | undefined; }[]' is not assignable to type 'Product[]'.
+      Type '{ id?: string | undefined; quantity?: number | undefined; price_cny?: number | undefined; name?: string | undefined; link?: string | undefined; negotiated_price_cny?: number | undefined; weight_kg?: number | undefined; }' is not assignable to type 'Product'.
+        Types of property 'id' are incompatible.
+          Type 'string | undefined' is not assignable to type 'string'.
+            Type 'undefined' is not assignable to type 'string'.

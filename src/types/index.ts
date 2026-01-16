@@ -18,7 +18,7 @@ export interface OrderDetails {
   method: ShippingMethod;
   deposit: DepositPercent;
   products: Product[];
-  internal_ship_cny: number; // default 0
+  internal_ship_cny?: number; // default 0, optional from form
   customerName?: string;
   customerPhone?: string;
 }

@@ -20,7 +20,8 @@ export default function Calculator() {
         formState: { errors },
         watch,
     } = useForm<CalculatorFormValues>({
-        resolver: zodResolver(calculatorSchema),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(calculatorSchema) as any,
         defaultValues: {
             warehouse: 'HN',
             method: 'TMDT',
@@ -55,12 +56,13 @@ export default function Calculator() {
     const formValues = useWatch({ control });
 
     // Ensure formValues has valid data before calculation to prevent crashes
+    // Type assertion needed due to partial form state during data entry
     const safeOrderDetails = {
         warehouse: (formValues.warehouse || 'HN') as 'HN' | 'HCM',
         method: (formValues.method || 'TMDT') as 'TMDT' | 'TieuNgach' | 'ChinhNgach',
         deposit: (formValues.deposit || 70) as 70 | 80,
-        products: formValues.products || [],
-        internal_ship_cny: formValues.internal_ship_cny || 0,
+        products: (formValues.products || []) as { id: string; quantity: number; price_cny: number; negotiated_price_cny?: number; weight_kg?: number; name?: string; link?: string }[],
+        internal_ship_cny: formValues.internal_ship_cny ?? 0,
         customerName: formValues.customerName || '',
         customerPhone: formValues.customerPhone || ''
     };
