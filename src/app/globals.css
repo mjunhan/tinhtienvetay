@@ -1,5 +1,6 @@
-@import "tailwindcss";
-@import "@tailwindcss/typography";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* Golden Luxury Palette - v0.3.0 */
@@ -9,50 +10,22 @@
   /* Amber 600 */
   --color-primary-dark: #B45309;
   /* Amber 700 */
-
   --color-secondary: #FCD34D;
-  /* Amber 300 - Light accent */
-
+  /* Amber 300 */
   --color-background: #FFFBEB;
-  /* Amber 50 - Very light cream */
+  /* Amber 50 */
   --color-surface: #FFFFFF;
-  /* White cards */
-
   --color-text-main: #0F172A;
-  /* Slate 900 - Headings */
+  /* Slate 900 */
   --color-text-body: #475569;
-  /* Slate 600 - Body text */
+  /* Slate 600 */
   --color-text-muted: #94A3B8;
-  /* Slate 400 - Muted text */
-
-  /* Golden gradients for CTAs */
-  --gradient-golden: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-  --gradient-golden-hover: linear-gradient(135deg, #D97706 0%, #B45309 100%);
-
-  /* Border colors */
-  --color-border-light: #FEF3C7;
-  /* Amber 100 */
-  --color-border-medium: #FDE68A;
-  /* Amber 200 */
-}
-
-@theme inline {
-  --color-primary: var(--color-primary);
-  --color-secondary: var(--color-secondary);
-  --color-background: var(--color-background);
-  --color-surface: var(--color-surface);
-
-  --color-text-main: var(--color-text-main);
-  --color-text-body: var(--color-text-body);
-  --color-text-muted: var(--color-text-muted);
-
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Slate 400 */
 }
 
 body {
   background-color: var(--color-background);
   color: var(--color-text-body);
-  font-family: var(--font-sans);
 }
 
 /* Glassmorphism utility classes */
@@ -75,9 +48,4 @@ body {
 
 .golden-glow-hover:hover {
   box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.4);
-}
-
-/* Smooth transitions for all interactive elements */
-* {
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
