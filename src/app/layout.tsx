@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 import { StickyFooter } from "@/components/common/StickyFooter";
+import { Providers } from "@/lib/providers";
 
 export default function RootLayout({
   children,
@@ -26,8 +27,10 @@ export default function RootLayout({
         className={`${inter.className} bg-[#F8F9FC] text-text-main min-h-screen pb-24 md:pb-0`}
         suppressHydrationWarning
       >
-        {children}
-        <StickyFooter />
+        <Providers>
+          {children}
+          <StickyFooter />
+        </Providers>
       </body>
     </html>
   );

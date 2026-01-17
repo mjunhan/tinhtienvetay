@@ -4,18 +4,18 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { calculatorSchema, CalculatorFormValues } from '@/lib/schemas';
 import { useCostCalculator } from '@/hooks/useCostCalculator';
+import { usePricingRules } from '@/hooks/usePricingRules';
 import { InputCard } from './InputCard';
 import { ResultCard } from './ResultCard';
 import { useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
-import { PricingConfig } from '@/types';
 
 export default function Calculator() {
     const [showResult, setShowResult] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Pricing Data State
-    const [pricingData, setPricingData] = useState<PricingConfig | undefined>(undefined);
+    // Fetch pricing data using React Query
+    const { data: pricingData, isLoading: isPricingLoading, error: pricingError } = usePricingRules();
 
     const {
         control,
@@ -48,7 +48,7 @@ export default function Calculator() {
         mode: 'onChange'
     });
 
-    // Fetch Settings & Pricing
+    // Fetch Settings 
     const [settings, setSettings] = useState<{ clean_zalo_link: string; registration_link: string } | undefined>(undefined);
     useEffect(() => {
         // Fetch Settings
@@ -56,18 +56,6 @@ export default function Calculator() {
             .then(res => res.json())
             .then(data => setSettings(data))
             .catch(err => console.error("Failed to load settings", err));
-
-        // Fetch Pricing
-        fetch('/api/admin/pricing')
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    console.error("Pricing error:", data.error);
-                } else {
-                    setPricingData(data);
-                }
-            })
-            .catch(err => console.error("Failed to load pricing", err));
     }, []);
 
     const formValues = useWatch({ control });
@@ -141,7 +129,7 @@ export default function Calculator() {
                         <div className="mt-6">
                             <button
                                 type="submit"
-                                disabled={isSubmitting || !pricingData}
+                                disabled={isSubmitting || isPricingLoading || !pricingData}
                                 className="w-full py-4 bg-primary text-white text-lg font-bold rounded-xl shadow-lg shadow-primary/30 hover:bg-primary-hover transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? (
@@ -149,10 +137,14 @@ export default function Calculator() {
                                         <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                         ĐANG TÍNH TOÁN...
                                     </>
-                                ) : !pricingData ? (
+                                ) : isPricingLoading ? (
                                     <>
                                         <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        ĐANG TẢI DỮ LIỆU...
+                                        ĐANG TẢI BẢNG GIÁ...
+                                    </>
+                                ) : pricingError ? (
+                                    <>
+                                        ⚠️ LỖI TẢI DỮ LIỆU
                                     </>
                                 ) : (
                                     "XEM BÁO GIÁ CHI TIẾT"

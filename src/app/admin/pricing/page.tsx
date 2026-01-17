@@ -1,295 +1,267 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm, useFieldArray, Control } from 'react-hook-form';
-import { toast } from 'sonner';
-import { PricingConfig } from '@/types';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Loader2, Plus, Trash2, Save } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useServiceFeeRules, useShippingRateRules } from '@/hooks/usePricingRules';
+import { toast, Toaster } from 'sonner';
+import { DollarSign, Truck, Info } from 'lucide-react';
 
-export default function PricingPage() {
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'normal' | 'tmdt' | 'official'>('normal');
+export default function AdminPricingPage() {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'service' | 'shipping'>('service');
 
-    const { register, control, handleSubmit, reset, formState: { isSubmitting } } = useForm<PricingConfig>();
+    const { data: serviceFees, isLoading: isLoadingFees, refetch: refetchFees } = useServiceFeeRules();
+    const { data: shippingRates, isLoading: isLoadingRates, refetch: refetchRates } = useShippingRateRules();
 
+    // Verify auth
     useEffect(() => {
-        fetch('/api/admin/pricing')
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) throw new Error(data.error);
-                reset(data);
-            })
-            .catch(err => {
-                console.error(err);
-                toast.error("Không thể tải dữ liệu bảng giá");
-            })
-            .finally(() => setLoading(false));
-    }, [reset]);
+        const checkAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push('/admin/login');
+            } else {
+                setIsLoading(false);
+            }
+        };
+        checkAuth();
+    }, [router]);
 
-    const onSubmit = async (data: PricingConfig) => {
-        try {
-            const res = await fetch('/api/admin/pricing', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            if (result.error) throw new Error(result.error);
-            toast.success("Đã lưu thay đổi thành công!");
-        } catch (error) {
-            console.error(error);
-            toast.error("Lỗi khi lưu dữ liệu");
-        }
+    const formatMoney = (value: number) => {
+        return new Intl.NumberFormat('vi-VN').format(value);
     };
 
-    if (loading) {
-        return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin w-8 h-8 text-primary" /></div>;
+    if (isLoading || isLoadingFees || isLoadingRates) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
     }
 
     return (
-        <div className="container mx-auto p-6 max-w-7xl">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-slate-800">Quản lý Bảng Giá & Tỷ Giá</h1>
-                <Button onClick={handleSubmit(onSubmit)} disabled={isSubmitting} className="flex gap-2">
-                    {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
-                    Lưu Thay Đổi
-                </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <Card className="p-4 bg-blue-50 border-blue-100">
-                    <label className="text-sm font-semibold text-blue-800 mb-2 block">Tỷ giá (1 Tệ = VND)</label>
-                    <Input
-                        type="number"
-                        {...register('exchange_rate', { valueAsNumber: true })}
-                        className="bg-white text-lg font-bold"
-                    />
-                </Card>
+        <div className="space-y-6">
+            {/* Header */}
+            <div>
+                <h1 className="text-3xl font-bold text-gray-900">Quản lý giá</h1>
+                <p className="text-gray-600 mt-2">Chỉnh sửa phí dịch vụ và phí vận chuyển</p>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-slate-200">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex gap-2">
                 <button
-                    onClick={() => setActiveTab('normal')}
-                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'normal' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-800'
+                    onClick={() => setActiveTab('service')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'service'
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                            : 'text-gray-700 hover:bg-gray-100'
                         }`}
                 >
-                    Vận Chuyển Thường (Tiểu Ngạch)
+                    <DollarSign size={20} />
+                    Phí dịch vụ
                 </button>
                 <button
-                    onClick={() => setActiveTab('tmdt')}
-                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'tmdt' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-800'
+                    onClick={() => setActiveTab('shipping')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'shipping'
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                            : 'text-gray-700 hover:bg-gray-100'
                         }`}
                 >
-                    Line TMĐT
-                </button>
-                <button
-                    onClick={() => setActiveTab('official')}
-                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'official' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                >
-                    Line Chính Ngạch
+                    <Truck size={20} />
+                    Phí vận chuyển
                 </button>
             </div>
 
-            <div className="space-y-8">
-                {activeTab === 'normal' && <NormalShippingEditor control={control} register={register} />}
-                {activeTab === 'tmdt' && <TMDTShippingEditor control={control} register={register} />}
-                {activeTab === 'official' && <OfficialShippingEditor control={control} register={register} />}
+            {/* Service Fees Tab */}
+            {activeTab === 'service' && (
+                <div className="space-y-6">
+                    {/* Info Banner */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
+                        <Info className="text-blue-600 flex-shrink-0 mt-1" size={20} />
+                        <div className="text-sm text-blue-800">
+                            <p className="font-semibold mb-1">Phí dịch vụ</p>
+                            <p>Phí % dựa trên giá trị đơn hàng và mức đặt cọc (70% hoặc 80%)</p>
+                        </div>
+                    </div>
+
+                    {/* TMDT Service Fees */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+                            <h2 className="text-xl font-bold text-white">TMDT</h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Từ (VND)</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đến (VND)</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đặt cọc</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phí %</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {serviceFees
+                                        ?.filter(sf => sf.method === 'TMDT')
+                                        .sort((a, b) => a.min_order_value - b.min_order_value)
+                                        .map((fee) => (
+                                            <tr key={fee.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.min_order_value)}₫</td>
+                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
+                                                            ? 'bg-orange-100 text-orange-800'
+                                                            : 'bg-green-100 text-green-800'
+                                                        }`}>
+                                                        {fee.deposit_percent}%
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm font-semibold text-blue-600">{fee.fee_percent}%</td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* TieuNgach Service Fees */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
+                            <h2 className="text-xl font-bold text-white">Tiểu Ngạch</h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Từ (VND)</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đến (VND)</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đặt cọc</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phí %</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {serviceFees
+                                        ?.filter(sf => sf.method === 'TieuNgach')
+                                        .sort((a, b) => a.min_order_value - b.min_order_value)
+                                        .map((fee) => (
+                                            <tr key={fee.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.min_order_value)}₫</td>
+                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
+                                                            ? 'bg-orange-100 text-orange-800'
+                                                            : 'bg-green-100 text-green-800'
+                                                        }`}>
+                                                        {fee.deposit_percent}%
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm font-semibold text-green-600">{fee.fee_percent}%</td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* ChinhNgach Service Fees */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
+                            <h2 className="text-xl font-bold text-white">Chính Ngạch</h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Từ (VND)</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đến (VND)</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đặt cọc</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phí %</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {serviceFees
+                                        ?.filter(sf => sf.method === 'ChinhNgach')
+                                        .sort((a, b) => a.min_order_value - b.min_order_value)
+                                        .map((fee) => (
+                                            <tr key={fee.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.min_order_value)}₫</td>
+                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
+                                                            ? 'bg-orange-100 text-orange-800'
+                                                            : 'bg-green-100 text-green-800'
+                                                        }`}>
+                                                        {fee.deposit_percent}%
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm font-semibold text-purple-600">
+                                                    {fee.fee_percent === 0 ? '300,000₫ cố định' : `${fee.fee_percent}%`}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Shipping Rates Tab - Simplified version showing key rates */}
+            {activeTab === 'shipping' && (
+                <div className="space-y-6">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
+                        <Info className="text-blue-600 flex-shrink-0 mt-1" size={20} />
+                        <div className="text-sm text-blue-800">
+                            <p className="font-semibold mb-1">Phí vận chuyển quốc tế</p>
+                            <p>Phí theo trọng lượng (kg) hoặc giá trị đơn hàng, tùy phương thức vận chuyển</p>
+                        </div>
+                    </div>
+
+                    {/* Summary Table */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-xl font-bold mb-4">Tổng hợp phí vận chuyển</h2>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Tổng số: <strong>{shippingRates?.length || 0}</strong> bản ghi phí vận chuyển
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-4 bg-blue-50 rounded-lg">
+                                <p className="text-sm text-gray-600">TMDT</p>
+                                <p className="text-2xl font-bold text-blue-600">
+                                    {shippingRates?.filter(r => r.method === 'TMDT').length || 0}
+                                </p>
+                            </div>
+                            <div className="p-4 bg-green-50 rounded-lg">
+                                <p className="text-sm text-gray-600">Tiểu Ngạch</p>
+                                <p className="text-2xl font-bold text-green-600">
+                                    {shippingRates?.filter(r => r.method === 'TieuNgach').length || 0}
+                                </p>
+                            </div>
+                            <div className="p-4 bg-purple-50 rounded-lg">
+                                <p className="text-sm text-gray-600">Chính Ngạch</p>
+                                <p className="text-2xl font-bold text-purple-600">
+                                    {shippingRates?.filter(r => r.method === 'ChinhNgach').length || 0}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Note about detailed view */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                        <p className="text-sm text-amber-800">
+                            Xem chi tiết tất cả shipping rates trong Supabase Table Editor hoặc sử dụng SQL queries.
+                            Full table editor UI sẽ được thêm trong phiên bản tiếp theo!
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Note */}
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <p className="text-sm text-gray-600">
+                    💡 <strong>Để chỉnh sửa pricing:</strong> Truy cập Supabase Dashboard → Table Editor → Chọn bảng tương ứng
+                </p>
             </div>
+
+            <Toaster position="top-center" />
         </div>
-    );
-}
-
-// Sub-components for cleaner code
-function NormalShippingEditor({ control, register }: { control: Control<PricingConfig>, register: any }) {
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "normal_shipping"
-    });
-
-    return (
-        <Card title="Cấu hình Vận Chuyển Thường" className="overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
-                        <tr>
-                            <th className="px-4 py-3">Min Value (VND)</th>
-                            <th className="px-4 py-3">Max Value (VND)</th>
-                            <th className="px-4 py-3 text-center">Phí DV (%)</th>
-                            <th className="px-4 py-3 text-center">HN (Thực)</th>
-                            <th className="px-4 py-3 text-center">HN (QĐ)</th>
-                            <th className="px-4 py-3 text-center">HCM (Thực)</th>
-                            <th className="px-4 py-3 text-center">HCM (QĐ)</th>
-                            <th className="px-4 py-3 w-10"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {fields.map((field, index) => (
-                            <tr key={field.id} className="hover:bg-slate-50/50">
-                                <td className="p-2"><Input type="number" {...register(`normal_shipping.${index}.min_value`, { valueAsNumber: true })} /></td>
-                                <td className="p-2"><Input type="number" {...register(`normal_shipping.${index}.max_value`, { valueAsNumber: true })} /></td>
-                                <td className="p-2 w-24"><Input type="number" step="0.1" {...register(`normal_shipping.${index}.fee_percent`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 w-28"><Input type="number" {...register(`normal_shipping.${index}.hn_actual`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 w-28"><Input type="number" {...register(`normal_shipping.${index}.hn_converted`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 w-28"><Input type="number" {...register(`normal_shipping.${index}.hcm_actual`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 w-28"><Input type="number" {...register(`normal_shipping.${index}.hcm_converted`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 text-center">
-                                    <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-4 h-4" /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <div className="p-4 border-t border-slate-100">
-                <Button variant="outline" size="sm" onClick={() => append({ min_value: 0, max_value: 0, fee_percent: 0, hn_actual: 0, hn_converted: 0, hcm_actual: 0, hcm_converted: 0 })} className="flex gap-2">
-                    <Plus className="w-4 h-4" /> Thêm dòng
-                </Button>
-            </div>
-        </Card>
-    );
-}
-
-function TMDTShippingEditor({ control, register }: { control: Control<PricingConfig>, register: any }) {
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "tmdt_shipping"
-    });
-
-    return (
-        <Card title="Cấu hình Line TMĐT" className="overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
-                        <tr>
-                            <th className="px-4 py-3">Min Value (VND)</th>
-                            <th className="px-4 py-3">Max Value (VND)</th>
-                            <th className="px-4 py-3 text-center">Phí DV (%)</th>
-                            <th className="px-4 py-3 text-center">HN (Thực)</th>
-                            <th className="px-4 py-3 text-center">HCM (Thực)</th>
-                            <th className="px-4 py-3 w-10"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {fields.map((field, index) => (
-                            <tr key={field.id} className="hover:bg-slate-50/50">
-                                <td className="p-2"><Input type="number" {...register(`tmdt_shipping.${index}.min_value`, { valueAsNumber: true })} /></td>
-                                <td className="p-2"><Input type="number" {...register(`tmdt_shipping.${index}.max_value`, { valueAsNumber: true })} /></td>
-                                <td className="p-2 w-24"><Input type="number" step="0.1" {...register(`tmdt_shipping.${index}.fee_percent`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 w-32"><Input type="number" {...register(`tmdt_shipping.${index}.hn_actual`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 w-32"><Input type="number" {...register(`tmdt_shipping.${index}.hcm_actual`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 text-center">
-                                    <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-4 h-4" /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <div className="p-4 border-t border-slate-100">
-                <Button variant="outline" size="sm" onClick={() => append({ min_value: 0, max_value: 0, fee_percent: 0, hn_actual: 0, hcm_actual: 0 })} className="flex gap-2">
-                    <Plus className="w-4 h-4" /> Thêm dòng
-                </Button>
-            </div>
-        </Card>
-    );
-}
-
-function OfficialShippingEditor({ control, register }: { control: Control<PricingConfig>, register: any }) {
-    return (
-        <div className="space-y-8">
-            <OfficialHeavyEditor control={control} register={register} />
-            <OfficialBulkyEditor control={control} register={register} />
-        </div>
-    );
-}
-
-function OfficialHeavyEditor({ control, register }: { control: Control<PricingConfig>, register: any }) {
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "official_shipping.heavy"
-    });
-
-    return (
-        <Card title="Hàng Nặng (Tính theo KG)" className="overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
-                        <tr>
-                            <th className="px-4 py-3">Min Weight (KG)</th>
-                            <th className="px-4 py-3">Max Weight (KG)</th>
-                            <th className="px-4 py-3 text-center">Giá HN (VND/KG)</th>
-                            <th className="px-4 py-3 text-center">Giá HCM (VND/KG)</th>
-                            <th className="px-4 py-3 w-10"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {fields.map((field, index) => (
-                            <tr key={field.id} className="hover:bg-slate-50/50">
-                                <td className="p-2"><Input type="number" {...register(`official_shipping.heavy.${index}.min_weight`, { valueAsNumber: true })} /></td>
-                                <td className="p-2"><Input type="number" {...register(`official_shipping.heavy.${index}.max_weight`, { valueAsNumber: true })} /></td>
-                                <td className="p-2"><Input type="number" {...register(`official_shipping.heavy.${index}.price_hn`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2"><Input type="number" {...register(`official_shipping.heavy.${index}.price_hcm`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 text-center">
-                                    <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-4 h-4" /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <div className="p-4 border-t border-slate-100">
-                <Button variant="outline" size="sm" onClick={() => append({ min_weight: 0, max_weight: 0, price_hn: 0, price_hcm: 0 })} className="flex gap-2">
-                    <Plus className="w-4 h-4" /> Thêm dòng
-                </Button>
-            </div>
-        </Card>
-    );
-}
-
-function OfficialBulkyEditor({ control, register }: { control: Control<PricingConfig>, register: any }) {
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "official_shipping.bulky"
-    });
-
-    return (
-        <Card title="Hàng Cồng Kềnh (Tính theo m3)" className="overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
-                        <tr>
-                            <th className="px-4 py-3">Min Vol (m3)</th>
-                            <th className="px-4 py-3">Max Vol (m3)</th>
-                            <th className="px-4 py-3 text-center">Giá HN (VND/m3)</th>
-                            <th className="px-4 py-3 text-center">Giá HCM (VND/m3)</th>
-                            <th className="px-4 py-3 w-10"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {fields.map((field, index) => (
-                            <tr key={field.id} className="hover:bg-slate-50/50">
-                                <td className="p-2"><Input type="number" {...register(`official_shipping.bulky.${index}.min_volume`, { valueAsNumber: true })} /></td>
-                                <td className="p-2"><Input type="number" {...register(`official_shipping.bulky.${index}.max_volume`, { valueAsNumber: true })} /></td>
-                                <td className="p-2"><Input type="number" {...register(`official_shipping.bulky.${index}.price_hn`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2"><Input type="number" {...register(`official_shipping.bulky.${index}.price_hcm`, { valueAsNumber: true })} className="text-center" /></td>
-                                <td className="p-2 text-center">
-                                    <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-4 h-4" /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <div className="p-4 border-t border-slate-100">
-                <Button variant="outline" size="sm" onClick={() => append({ min_volume: 0, max_volume: 0, price_hn: 0, price_hcm: 0 })} className="flex gap-2">
-                    <Plus className="w-4 h-4" /> Thêm dòng
-                </Button>
-            </div>
-        </Card>
     );
 }
