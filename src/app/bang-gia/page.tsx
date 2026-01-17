@@ -3,6 +3,8 @@
 import { usePricingRules } from '@/hooks/usePricingRules';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { staggerContainer, staggerItem, fadeIn } from '@/components/ui/motion-primitives';
 
 export default function BangGiaPage() {
     const { data: pricing, isLoading, error } = usePricingRules();
@@ -13,10 +15,10 @@ export default function BangGiaPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+            <div className="min-h-screen bg-amber-50 flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-                    <p className="text-gray-600">Đang tải bảng giá...</p>
+                    <Loader2 className="w-12 h-12 text-amber-600 animate-spin mx-auto mb-4" />
+                    <p className="text-slate-600">Đang tải bảng giá...</p>
                 </div>
             </div>
         );
@@ -24,48 +26,53 @@ export default function BangGiaPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
+            <div className="min-h-screen bg-amber-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center border border-amber-100">
                     <div className="text-red-500 text-5xl mb-4">⚠️</div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Không thể tải bảng giá</h2>
-                    <p className="text-gray-600 mb-4">Vui lòng thử lại sau hoặc liên hệ hỗ trợ.</p>
-                    <Link href="/" className="text-blue-600 hover:underline">← Quay về trang chủ</Link>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Không thể tải bảng giá</h2>
+                    <p className="text-slate-600 mb-4">Vui lòng thử lại sau hoặc liên hệ hỗ trợ.</p>
+                    <Link href="/" className="text-amber-600 hover:underline font-semibold">← Quay về trang chủ</Link>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4">
+        <div className="min-h-screen bg-amber-50 py-12 px-4">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
+                <motion.div variants={fadeIn} initial="initial" animate="animate" className="mb-8">
                     <Link
                         href="/"
-                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 transition-colors"
+                        className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 mb-4 transition-colors font-semibold"
                     >
                         <ArrowLeft size={20} />
                         Quay về trang chủ
                     </Link>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                    <h1 className="text-5xl font-bold text-slate-900 mb-2">
                         Bảng Giá Dịch Vụ
                     </h1>
-                    <p className="text-gray-600">Cập nhật: {new Date().toLocaleDateString('vi-VN')}</p>
-                </div>
+                    <p className="text-slate-600">Cập nhật: {new Date().toLocaleDateString('vi-VN')}</p>
+                </motion.div>
 
                 {/* Exchange Rate Banner */}
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 mb-8 text-white">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl shadow-xl p-8 mb-8 text-white"
+                >
                     <div className="flex items-center justify-between flex-wrap gap-4">
                         <div>
-                            <p className="text-blue-100 mb-2">Tỷ giá hôm nay</p>
+                            <p className="text-amber-100 mb-2">Tỷ giá hôm nay</p>
                             <p className="text-5xl font-bold">1¥ = {formatMoney(pricing?.exchange_rate || 0)}₫</p>
                         </div>
                         <div className="bg-white/20 backdrop-blur-sm rounded-xl px-6 py-4">
-                            <p className="text-sm text-blueblue-100">CNY → VND</p>
+                            <p className="text-sm text-amber-100">CNY → VND</p>
                             <p className="text-2xl font-semibold">{pricing?.exchange_rate || 0}</p>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* TMDT & TieuNgach Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -217,13 +224,18 @@ export default function BangGiaPage() {
                 </div>
 
                 {/* CTA Section */}
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-center text-white">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl shadow-xl p-8 text-center text-white"
+                >
                     <h3 className="text-2xl font-bold mb-4">Cần tư vấn chi tiết?</h3>
-                    <p className="text-blue-100 mb-6">Liên hệ ngay để được báo giá chính xác nhất!</p>
+                    <p className="text-amber-50 mb-6">Liên hệ ngay để được báo giá chính xác nhất!</p>
                     <div className="flex flex-wrap gap-4 justify-center">
                         <Link
                             href="/"
-                            className="px-8 py-3 bg-white text-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-all shadow-lg"
+                            className="px-8 py-3 bg-white text-amber-600 rounded-xl font-semibold hover:shadow-lg transition-all"
                         >
                             Tính phí ngay
                         </Link>
@@ -234,12 +246,12 @@ export default function BangGiaPage() {
                             📞 Hotline
                         </a>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Footer Note */}
-                <div className="mt-8 text-center text-sm text-gray-600">
+                <div className="mt-8 text-center text-sm text-slate-600">
                     <p>* Giá trên có thể thay đổi tùy theo thời điểm. Vui lòng liên hệ để được báo giá chính xác.</p>
-                    <p className="mt-2">© 2026 Tính Tiền Về Tay - v0.2.0</p>
+                    <p className="mt-2">© 2026 Tính Tiền Vé Tàu - v0.3.0</p>
                 </div>
             </div>
         </div>

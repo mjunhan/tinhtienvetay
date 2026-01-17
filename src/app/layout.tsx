@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Logistics Cost Estimator",
-  description: "Real-time logistics cost estimator for China-Vietnam imports",
+  title: "Tính Tiền Vé Tàu - v0.3.0",
+  description: "Công cụ tính chi phí vận chuyển Trung-Việt | Mẹo nhập hàng & Hỗ trợ 24/7",
 };
 
 import { StickyFooter } from "@/components/common/StickyFooter";
@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body
-        className={`${inter.className} bg-[#F8F9FC] text-text-main min-h-screen pb-24 md:pb-0`}
+        className={`${inter.className} bg-amber-50 text-text-body min-h-screen pb-24 md:pb-0`}
         suppressHydrationWarning
       >
         <Providers>

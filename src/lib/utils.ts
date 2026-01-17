@@ -22,3 +22,15 @@ export function formatCNY(amount: number): string {
 export function formatNumber(num: number): string {
     return new Intl.NumberFormat('vi-VN').format(num);
 }
+
+export function generateSlug(title: string): string {
+    return title
+        .toLowerCase()
+        .normalize("NFD") // Normalize Vietnamese characters
+        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+        .replace(/đ/g, "d") // Replace đ with d
+        .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+        .replace(/\s+/g, "-") // Replace spaces with hyphens
+        .replace(/-+/g, "-") // Replace multiple hyphens with single
+        .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+}
