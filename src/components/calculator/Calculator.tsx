@@ -8,10 +8,14 @@ import { InputCard } from './InputCard';
 import { ResultCard } from './ResultCard';
 import { useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
+import { PricingConfig } from '@/types';
 
 export default function Calculator() {
     const [showResult, setShowResult] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Pricing Data State
+    const [pricingData, setPricingData] = useState<PricingConfig | undefined>(undefined);
 
     const {
         control,
@@ -44,13 +48,26 @@ export default function Calculator() {
         mode: 'onChange'
     });
 
-    // Fetch Settings
+    // Fetch Settings & Pricing
     const [settings, setSettings] = useState<{ clean_zalo_link: string; registration_link: string } | undefined>(undefined);
     useEffect(() => {
+        // Fetch Settings
         fetch('/api/admin/settings')
             .then(res => res.json())
             .then(data => setSettings(data))
             .catch(err => console.error("Failed to load settings", err));
+
+        // Fetch Pricing
+        fetch('/api/admin/pricing')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    console.error("Pricing error:", data.error);
+                } else {
+                    setPricingData(data);
+                }
+            })
+            .catch(err => console.error("Failed to load pricing", err));
     }, []);
 
     const formValues = useWatch({ control });
@@ -67,7 +84,7 @@ export default function Calculator() {
         customerPhone: formValues.customerPhone || ''
     };
 
-    const breakdown = useCostCalculator(safeOrderDetails);
+    const breakdown = useCostCalculator(safeOrderDetails, pricingData);
 
     const onSubmit = async (data: CalculatorFormValues) => {
         setIsSubmitting(true);
@@ -124,13 +141,18 @@ export default function Calculator() {
                         <div className="mt-6">
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !pricingData}
                                 className="w-full py-4 bg-primary text-white text-lg font-bold rounded-xl shadow-lg shadow-primary/30 hover:bg-primary-hover transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? (
                                     <>
                                         <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                         ĐANG TÍNH TOÁN...
+                                    </>
+                                ) : !pricingData ? (
+                                    <>
+                                        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ĐANG TẢI DỮ LIỆU...
                                     </>
                                 ) : (
                                     "XEM BÁO GIÁ CHI TIẾT"

@@ -1,13 +1,13 @@
 export type Warehouse = 'HN' | 'HCM';
 export type ShippingMethod = 'TMDT' | 'TieuNgach' | 'ChinhNgach';
-export type DepositPercent = 70 | 80; // 70% or 80%
+export type DepositPercent = 70 | 80;
 
 export interface Product {
-  id: string; // generated uuid for list key
+  id: string;
   quantity: number;
-  price_cny: number; // Web price
-  negotiated_price_cny?: number; // Optional deal price
-  weight_kg?: number; // Estimated weight per unit (optional if total is used)
+  price_cny: number;
+  negotiated_price_cny?: number;
+  weight_kg?: number;
   name?: string;
   image_url?: string;
   link?: string;
@@ -18,7 +18,7 @@ export interface OrderDetails {
   method: ShippingMethod;
   deposit: DepositPercent;
   products: Product[];
-  internal_ship_cny?: number; // default 0, optional from form
+  internal_ship_cny?: number;
   customerName?: string;
   customerPhone?: string;
 }
@@ -32,36 +32,51 @@ export interface CostBreakdown {
   service_fee_vnd: number;
 
   total_weight_kg: number;
-  shipping_rate_vnd: number; // price per kg
+  shipping_rate_vnd: number;
   int_shipping_fee_vnd: number;
 
-  internal_ship_vnd: number; // converted from cny
+  internal_ship_vnd: number;
 
-  total_landed_cost: number; // Final total
-  deposit_amount: number; // Amount to deposit
-  remaining_amount: number; // Total - Deposit
+  total_landed_cost: number;
+  deposit_amount: number;
+  remaining_amount: number;
 
-  avg_price_per_unit_vnd: number; // Helper for display
+  avg_price_per_unit_vnd: number;
 }
 
-// For DB/Supabase later
-export interface GlobalSettings {
-  key: string;
-  value: number;
-  description?: string;
-}
-
-export interface ShippingRate {
-  id: string;
-  warehouse_loc: Warehouse;
-  shipping_method: ShippingMethod;
-  price_per_kg: number;
-}
-
-export interface ServiceFee {
-  id: string;
-  min_order_value: number;
-  max_order_value: number;
-  deposit_percent: number;
+export interface NormalShippingTier {
+  min_value: number;
+  max_value: number;
   fee_percent: number;
+  hn_actual: number;
+  hn_converted: number;
+  hcm_actual: number;
+  hcm_converted: number;
+}
+
+export interface TMDTShippingTier {
+  min_value: number;
+  max_value: number;
+  fee_percent: number;
+  hn_actual: number;
+  hcm_actual: number;
+}
+
+export interface OfficialShippingTier {
+  min_weight?: number;
+  max_weight?: number;
+  min_volume?: number;
+  max_volume?: number;
+  price_hn: number;
+  price_hcm: number;
+}
+
+export interface PricingConfig {
+  exchange_rate: number;
+  normal_shipping: NormalShippingTier[];
+  tmdt_shipping: TMDTShippingTier[];
+  official_shipping: {
+    heavy: OfficialShippingTier[];
+    bulky: OfficialShippingTier[];
+  };
 }

@@ -1,0 +1,109 @@
+{
+    "exchange_rate": 3960,
+    "normal_shipping": [
+        {
+            "min_value": 0,
+            "max_value": 2000000,
+            "fee_percent": 3,
+            "hn_actual": 19000,
+            "hn_converted": 21000,
+            "hcm_actual": 24000,
+            "hcm_converted": 26000
+        },
+        {
+            "min_value": 2000001,
+            "max_value": 5000000,
+            "fee_percent": 1.5,
+            "hn_actual": 14000,
+            "hn_converted": 16000,
+            "hcm_actual": 19000,
+            "hcm_converted": 21000
+        },
+        {
+            "min_value": 5000001,
+            "max_value": 999999999999,
+            "fee_percent": 1.2,
+            "hn_actual": 8000,
+            "hn_converted": 10000,
+            "hcm_actual": 12000,
+            "hcm_converted": 14000
+        }
+    ],
+    "tmdt_shipping": [
+        {
+            "min_value": 0,
+            "max_value": 2000000,
+            "fee_percent": 3,
+            "hn_actual": 23500,
+            "hcm_actual": 28500
+        },
+        {
+            "min_value": 2000001,
+            "max_value": 5000000,
+            "fee_percent": 1.5,
+            "hn_actual": 20000,
+            "hcm_actual": 25000
+        },
+        {
+            "min_value": 5000001,
+            "max_value": 999999999999,
+            "fee_percent": 1.2,
+            "hn_actual": 19500,
+            "hcm_actual": 23500
+        }
+    ],
+    "official_shipping": {
+        "heavy": [
+            {
+                "min_weight": 100,
+                "max_weight": 500,
+                "price_hn": 7000,
+                "price_hcm": 11000
+            },
+            {
+                "min_weight": 500,
+                "max_weight": 1000,
+                "price_hn": 6500,
+                "price_hcm": 10500
+            },
+            {
+                "min_weight": 1000,
+                "max_weight": 2000,
+                "price_hn": 6000,
+                "price_hcm": 10000
+            },
+            {
+                "min_weight": 2000,
+                "max_weight": 999999999,
+                "price_hn": 5500,
+                "price_hcm": 9500
+            }
+        ],
+        "bulky": [
+            {
+                "min_volume": 0,
+                "max_volume": 10,
+                "price_hn": 1200000,
+                "price_hcm": 1800000
+            },
+            {
+                "min_volume": 10,
+                "max_volume": 20,
+                "price_hn": 1100000,
+                "price_hcm": 1700000
+            },
+            {
+                "min_volume": 20,
+                "max_volume": 30,
+                "price_hn": 1000000,
+                "price_hcm": 1600000
+            },
+            {
+                "min_volume": 30,
+                "max_volume": 999999,
+                "price_hn": 950000,
+                "price_hcm": 1550000
+            }
+        ]
+    }
+}
