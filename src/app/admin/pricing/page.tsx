@@ -5,12 +5,19 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useServiceFeeRules, useShippingRateRules } from '@/hooks/usePricingRules';
 import { toast, Toaster } from 'sonner';
-import { DollarSign, Truck, Info } from 'lucide-react';
+import { DollarSign, Truck, Info, Pencil } from 'lucide-react';
+import { EditServiceFeeDialog } from '@/components/admin/pricing/EditServiceFeeDialog';
+import { EditShippingRateDialog } from '@/components/admin/pricing/EditShippingRateDialog';
+import type { ServiceFeeRule, ShippingRateRule } from '@/types/database.types';
 
 export default function AdminPricingPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'service' | 'shipping'>('service');
+
+    // Dialog states
+    const [editingServiceFee, setEditingServiceFee] = useState<ServiceFeeRule | null>(null);
+    const [editingShippingRate, setEditingShippingRate] = useState<ShippingRateRule | null>(null);
 
     const { data: serviceFees, isLoading: isLoadingFees, refetch: refetchFees } = useServiceFeeRules();
     const { data: shippingRates, isLoading: isLoadingRates, refetch: refetchRates } = useShippingRateRules();
@@ -39,6 +46,160 @@ export default function AdminPricingPage() {
             </div>
         );
     }
+
+    const renderServiceFeeTable = (method: string, title: string, gradientClass: string, colorClass: string) => {
+        const fees = serviceFees?.filter(sf => sf.method === method).sort((a, b) => a.min_order_value - b.min_order_value) || [];
+
+        return (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className={`${gradientClass} px-6 py-4`}>
+                    <h2 className="text-xl font-bold text-white">{title}</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Từ (VND)</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đến (VND)</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đặt cọc</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phí %</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {fees.map((fee) => (
+                                <tr key={fee.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 text-sm">{formatMoney(fee.min_order_value)}₫</td>
+                                    <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
+                                                ? 'bg-orange-100 text-orange-800'
+                                                : 'bg-green-100 text-green-800'
+                                            }`}>
+                                            {fee.deposit_percent}%
+                                        </span>
+                                    </td>
+                                    <td className={`px-6 py-4 text-sm font-semibold ${colorClass}`}>
+                                        {method === 'ChinhNgach' && fee.fee_percent === 0
+                                            ? '300,000₫ cố định'
+                                            : `${fee.fee_percent}%`}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <button
+                                            onClick={() => setEditingServiceFee(fee)}
+                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="Chỉnh sửa"
+                                        >
+                                            <Pencil size={16} className="text-gray-600" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
+
+    const renderShippingRateTable = (
+        method: string,
+        title: string,
+        type: string,
+        subtype: string | null,
+        gradientClass: string
+    ) => {
+        const rates = shippingRates?.filter(
+            r => r.method === method && r.type === type && (subtype ? r.subtype === subtype : true)
+        ).sort((a, b) => a.min_value - b.min_value) || [];
+
+        if (rates.length === 0) return null;
+
+        const getUnit = () => {
+            if (type === 'value_based') return 'VND';
+            if (type === 'weight_based') return 'kg';
+            if (type === 'volume_based') return 'm³';
+            return '';
+        };
+
+        const getPriceUnit = () => {
+            if (type === 'weight_based') return 'VND/kg';
+            if (type === 'volume_based') return 'VND/m³';
+            return 'VND';
+        };
+
+        // Group by value range and warehouse
+        const groupedRates: { [key: string]: { rate: ShippingRateRule; hn?: number; hcm?: number } } = {};
+        rates.forEach(rate => {
+            const key = `${rate.min_value}-${rate.max_value}`;
+            if (!groupedRates[key]) {
+                groupedRates[key] = { rate };
+            }
+            if (rate.warehouse === 'HN') {
+                groupedRates[key].hn = rate.price;
+            } else {
+                groupedRates[key].hcm = rate.price;
+            }
+        });
+
+        return (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className={`${gradientClass} px-6 py-4`}>
+                    <h2 className="text-xl font-bold text-white">{title}</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Từ ({getUnit()})
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Đến ({getUnit()})
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kho</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Giá ({getPriceUnit()})
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {rates.map((rate) => (
+                                <tr key={rate.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 text-sm">
+                                        {type === 'value_based' ? formatMoney(rate.min_value) : rate.min_value}
+                                        {type !== 'value_based' && ` ${getUnit()}`}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        {type === 'value_based' ? formatMoney(rate.max_value) : rate.max_value}
+                                        {type !== 'value_based' && ` ${getUnit()}`}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                            {rate.warehouse}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-semibold text-blue-600">
+                                        {formatMoney(rate.price)} {type === 'value_based' ? '₫' : ''}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <button
+                                            onClick={() => setEditingShippingRate(rate)}
+                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="Chỉnh sửa"
+                                        >
+                                            <Pencil size={16} className="text-gray-600" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="space-y-6">
@@ -84,128 +245,13 @@ export default function AdminPricingPage() {
                         </div>
                     </div>
 
-                    {/* TMDT Service Fees */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
-                            <h2 className="text-xl font-bold text-white">TMDT</h2>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Từ (VND)</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đến (VND)</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đặt cọc</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phí %</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {serviceFees
-                                        ?.filter(sf => sf.method === 'TMDT')
-                                        .sort((a, b) => a.min_order_value - b.min_order_value)
-                                        .map((fee) => (
-                                            <tr key={fee.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.min_order_value)}₫</td>
-                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
-                                                <td className="px-6 py-4 text-sm">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
-                                                            ? 'bg-orange-100 text-orange-800'
-                                                            : 'bg-green-100 text-green-800'
-                                                        }`}>
-                                                        {fee.deposit_percent}%
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm font-semibold text-blue-600">{fee.fee_percent}%</td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* TieuNgach Service Fees */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
-                            <h2 className="text-xl font-bold text-white">Tiểu Ngạch</h2>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Từ (VND)</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đến (VND)</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đặt cọc</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phí %</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {serviceFees
-                                        ?.filter(sf => sf.method === 'TieuNgach')
-                                        .sort((a, b) => a.min_order_value - b.min_order_value)
-                                        .map((fee) => (
-                                            <tr key={fee.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.min_order_value)}₫</td>
-                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
-                                                <td className="px-6 py-4 text-sm">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
-                                                            ? 'bg-orange-100 text-orange-800'
-                                                            : 'bg-green-100 text-green-800'
-                                                        }`}>
-                                                        {fee.deposit_percent}%
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm font-semibold text-green-600">{fee.fee_percent}%</td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* ChinhNgach Service Fees */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
-                            <h2 className="text-xl font-bold text-white">Chính Ngạch</h2>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Từ (VND)</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đến (VND)</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đặt cọc</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phí %</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {serviceFees
-                                        ?.filter(sf => sf.method === 'ChinhNgach')
-                                        .sort((a, b) => a.min_order_value - b.min_order_value)
-                                        .map((fee) => (
-                                            <tr key={fee.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.min_order_value)}₫</td>
-                                                <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
-                                                <td className="px-6 py-4 text-sm">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
-                                                            ? 'bg-orange-100 text-orange-800'
-                                                            : 'bg-green-100 text-green-800'
-                                                        }`}>
-                                                        {fee.deposit_percent}%
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm font-semibold text-purple-600">
-                                                    {fee.fee_percent === 0 ? '300,000₫ cố định' : `${fee.fee_percent}%`}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    {renderServiceFeeTable('TMDT', 'TMDT', 'bg-gradient-to-r from-blue-600 to-purple-600', 'text-blue-600')}
+                    {renderServiceFeeTable('TieuNgach', 'Tiểu Ngạch', 'bg-gradient-to-r from-green-600 to-teal-600', 'text-green-600')}
+                    {renderServiceFeeTable('ChinhNgach', 'Chính Ngạch', 'bg-gradient-to-r from-purple-600 to-pink-600', 'text-purple-600')}
                 </div>
             )}
 
-            {/* Shipping Rates Tab - Simplified version showing key rates */}
+            {/* Shipping Rates Tab */}
             {activeTab === 'shipping' && (
                 <div className="space-y-6">
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
@@ -216,50 +262,29 @@ export default function AdminPricingPage() {
                         </div>
                     </div>
 
-                    {/* Summary Table */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 className="text-xl font-bold mb-4">Tổng hợp phí vận chuyển</h2>
-                        <p className="text-sm text-gray-600 mb-4">
-                            Tổng số: <strong>{shippingRates?.length || 0}</strong> bản ghi phí vận chuyển
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="p-4 bg-blue-50 rounded-lg">
-                                <p className="text-sm text-gray-600">TMDT</p>
-                                <p className="text-2xl font-bold text-blue-600">
-                                    {shippingRates?.filter(r => r.method === 'TMDT').length || 0}
-                                </p>
-                            </div>
-                            <div className="p-4 bg-green-50 rounded-lg">
-                                <p className="text-sm text-gray-600">Tiểu Ngạch</p>
-                                <p className="text-2xl font-bold text-green-600">
-                                    {shippingRates?.filter(r => r.method === 'TieuNgach').length || 0}
-                                </p>
-                            </div>
-                            <div className="p-4 bg-purple-50 rounded-lg">
-                                <p className="text-sm text-gray-600">Chính Ngạch</p>
-                                <p className="text-2xl font-bold text-purple-600">
-                                    {shippingRates?.filter(r => r.method === 'ChinhNgach').length || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Note about detailed view */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                        <p className="text-sm text-amber-800">
-                            Xem chi tiết tất cả shipping rates trong Supabase Table Editor hoặc sử dụng SQL queries.
-                            Full table editor UI sẽ được thêm trong phiên bản tiếp theo!
-                        </p>
-                    </div>
+                    {renderShippingRateTable('TMDT', 'TMDT - Theo giá trị đơn hàng', 'value_based', null, 'bg-gradient-to-r from-blue-600 to-purple-600')}
+                    {renderShippingRateTable('TieuNgach', 'Tiểu Ngạch - Theo giá trị đơn hàng', 'value_based', null, 'bg-gradient-to-r from-green-600 to-teal-600')}
+                    {renderShippingRateTable('ChinhNgach', 'Chính Ngạch - Hàng cồng kềnh (theo kg)', 'weight_based', 'heavy', 'bg-gradient-to-r from-purple-600 to-pink-600')}
+                    {renderShippingRateTable('ChinhNgach', 'Chính Ngạch - Hàng thể tích (theo m³)', 'volume_based', 'bulky', 'bg-gradient-to-r from-pink-600 to-red-600')}
                 </div>
             )}
 
-            {/* Note */}
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                <p className="text-sm text-gray-600">
-                    💡 <strong>Để chỉnh sửa pricing:</strong> Truy cập Supabase Dashboard → Table Editor → Chọn bảng tương ứng
-                </p>
-            </div>
+            {/* Edit Dialogs */}
+            {editingServiceFee && (
+                <EditServiceFeeDialog
+                    open={true}
+                    onClose={() => setEditingServiceFee(null)}
+                    serviceFee={editingServiceFee}
+                />
+            )}
+
+            {editingShippingRate && (
+                <EditShippingRateDialog
+                    open={true}
+                    onClose={() => setEditingShippingRate(null)}
+                    shippingRate={editingShippingRate}
+                />
+            )}
 
             <Toaster position="top-center" />
         </div>

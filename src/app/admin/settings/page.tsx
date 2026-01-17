@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/lib/supabase';
 import { useGlobalSettings, useUpdateGlobalSetting } from '@/hooks/usePricingRules';
 import { toast, Toaster } from 'sonner';
-import { Save, RefreshCw } from 'lucide-react';
+import { Save, RefreshCw, Loader2 } from 'lucide-react';
+import { globalSettingsSchema, type GlobalSettingsFormData } from '@/schemas/admin';
+import { Label } from '@/components/ui/Label';
+import { Input } from '@/components/ui/Input';
 
 export default function AdminSettingsPage() {
     const router = useRouter();
@@ -13,9 +18,19 @@ export default function AdminSettingsPage() {
     const { data: settings, isLoading: isLoadingSettings, refetch } = useGlobalSettings();
     const updateSetting = useUpdateGlobalSetting();
 
-    const [exchangeRate, setExchangeRate] = useState('3960');
-    const [hotline, setHotline] = useState('');
-    const [zaloLink, setZaloLink] = useState('');
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm<GlobalSettingsFormData>({
+        resolver: zodResolver(globalSettingsSchema),
+        defaultValues: {
+            exchange_rate: '3960',
+            hotline: '',
+            zalo_link: '',
+        },
+    });
 
     // Verify auth
     useEffect(() => {
@@ -30,36 +45,34 @@ export default function AdminSettingsPage() {
         checkAuth();
     }, [router]);
 
-    // Load settings
+    // Load settings and update form
     useEffect(() => {
         if (settings) {
             const rate = settings.find(s => s.key === 'exchange_rate');
             const phone = settings.find(s => s.key === 'hotline');
             const zalo = settings.find(s => s.key === 'zalo_link');
 
-            if (rate) setExchangeRate(rate.value);
-            if (phone) setHotline(phone.value);
-            if (zalo) setZaloLink(zalo.value);
+            reset({
+                exchange_rate: rate?.value || '3960',
+                hotline: phone?.value || '',
+                zalo_link: zalo?.value || '',
+            });
         }
-    }, [settings]);
+    }, [settings, reset]);
 
-    const handleSave = async () => {
+    const onSubmit = async (data: GlobalSettingsFormData) => {
         try {
-            toast.loading('Đang lưu...');
-
             await Promise.all([
-                updateSetting.mutateAsync({ key: 'exchange_rate', value: exchangeRate }),
-                updateSetting.mutateAsync({ key: 'hotline', value: hotline }),
-                updateSetting.mutateAsync({ key: 'zalo_link', value: zaloLink }),
+                updateSetting.mutateAsync({ key: 'exchange_rate', value: data.exchange_rate }),
+                updateSetting.mutateAsync({ key: 'hotline', value: data.hotline }),
+                updateSetting.mutateAsync({ key: 'zalo_link', value: data.zalo_link }),
             ]);
 
-            toast.dismiss();
-            toast.success('Đã lưu cài đặt!');
+            toast.success('Cập nhật thành công!');
             refetch();
         } catch (error) {
-            toast.dismiss();
             console.error('Save error:', error);
-            toast.error('Lỗi khi lưu cài đặt');
+            toast.error('Lỗi khi lưu cài đặt. Vui lòng thử lại.');
         }
     };
 
@@ -80,86 +93,112 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Settings Form */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="space-y-6">
-                    {/* Exchange Rate */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tỷ giá (1 CNY = ? VND)
-                        </label>
-                        <div className="flex items-center gap-4">
-                            <span className="text-2xl font-bold text-gray-400">¥1 =</span>
-                            <input
-                                type="number"
-                                value={exchangeRate}
-                                onChange={(e) => setExchangeRate(e.target.value)}
-                                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-2xl font-bold"
-                                placeholder="3960"
-                            />
-                            <span className="text-2xl font-bold text-gray-400">₫</span>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div className="space-y-6">
+                        {/* Exchange Rate */}
+                        <div>
+                            <Label htmlFor="exchange_rate" required>
+                                Tỷ giá (1 CNY = ? VND)
+                            </Label>
+                            <div className="flex items-center gap-4">
+                                <span className="text-2xl font-bold text-gray-400">¥1 =</span>
+                                <Input
+                                    id="exchange_rate"
+                                    type="text"
+                                    {...register('exchange_rate')}
+                                    className="flex-1 text-2xl font-bold"
+                                    placeholder="3960"
+                                />
+                                <span className="text-2xl font-bold text-gray-400">₫</span>
+                            </div>
+                            {errors.exchange_rate && (
+                                <p className="text-sm text-red-600 mt-2">
+                                    {errors.exchange_rate.message}
+                                </p>
+                            )}
+                            <p className="text-sm text-gray-500 mt-2">
+                                Tỷ giá này sẽ được sử dụng để tính toán trong calculator
+                            </p>
                         </div>
-                        <p className="text-sm text-gray-500 mt-2">
-                            Tỷ giá này sẽ được sử dụng để tính toán trong calculator
-                        </p>
+
+                        <hr className="border-gray-200" />
+
+                        {/* Hotline */}
+                        <div>
+                            <Label htmlFor="hotline" required>
+                                Số hotline
+                            </Label>
+                            <Input
+                                id="hotline"
+                                type="tel"
+                                {...register('hotline')}
+                                placeholder="0912345678"
+                            />
+                            {errors.hotline && (
+                                <p className="text-sm text-red-600 mt-2">
+                                    {errors.hotline.message}
+                                </p>
+                            )}
+                            <p className="text-sm text-gray-500 mt-2">
+                                Số điện thoại hỗ trợ khách hàng
+                            </p>
+                        </div>
+
+                        {/* Zalo Link */}
+                        <div>
+                            <Label htmlFor="zalo_link" required>
+                                Link Zalo OA
+                            </Label>
+                            <Input
+                                id="zalo_link"
+                                type="url"
+                                {...register('zalo_link')}
+                                placeholder="https://zalo.me/tinhtienvetay"
+                            />
+                            {errors.zalo_link && (
+                                <p className="text-sm text-red-600 mt-2">
+                                    {errors.zalo_link.message}
+                                </p>
+                            )}
+                            <p className="text-sm text-gray-500 mt-2">
+                                Link Zalo Official Account để khách hàng liên hệ
+                            </p>
+                        </div>
                     </div>
 
-                    <hr className="border-gray-200" />
+                    {/* Actions */}
+                    <div className="flex gap-3 mt-8">
+                        <button
+                            type="submit"
+                            disabled={updateSetting.isPending}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {updateSetting.isPending ? (
+                                <>
+                                    <Loader2 size={20} className="animate-spin" />
+                                    Đang lưu...
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={20} />
+                                    Lưu thay đổi
+                                </>
+                            )}
+                        </button>
 
-                    {/* Hotline */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Số hotline
-                        </label>
-                        <input
-                            type="tel"
-                            value={hotline}
-                            onChange={(e) => setHotline(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="0912345678"
-                        />
-                        <p className="text-sm text-gray-500 mt-2">
-                            Số điện thoại hỗ trợ khách hàng
-                        </p>
-                    </div>
-
-                    {/* Zalo Link */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Link Zalo OA
-                        </label>
-                        <input
-                            type="url"
-                            value={zaloLink}
-                            onChange={(e) => setZaloLink(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="https://zalo.me/tinhtienvetay"
-                        />
-                        <p className="text-sm text-gray-500 mt-2">
-                            Link Zalo Official Account để khách hàng liên hệ
-                        </p>
+                        <button
+                            type="button"
+                            onClick={() => refetch()}
+                            disabled={updateSetting.isPending}
+                            className="flex items-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
+                        >
+                            <RefreshCw size={20} />
+                            Làm mới
+                        </button>
                     </div>
                 </div>
-
-                {/* Actions */}
-                <div className="flex gap-3 mt-8">
-                    <button
-                        onClick={handleSave}
-                        disabled={updateSetting.isPending}
-                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Save size={20} />
-                        {updateSetting.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
-                    </button>
-
-                    <button
-                        onClick={() => refetch()}
-                        className="flex items-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all"
-                    >
-                        <RefreshCw size={20} />
-                        Làm mới
-                    </button>
-                </div>
-            </div>
+            </form>
 
             {/* Info Box */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">

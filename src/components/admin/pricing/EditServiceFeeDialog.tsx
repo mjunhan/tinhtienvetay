@@ -1,0 +1,195 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
+import { Dialog } from '@/components/ui/Dialog';
+import { Label } from '@/components/ui/Label';
+import { Input } from '@/components/ui/Input';
+import { useUpdateServiceFee } from '@/hooks/useAdminMutations';
+import { serviceFeeSchema, type ServiceFeeFormData } from '@/schemas/admin';
+import type { ServiceFeeRule } from '@/types/database.types';
+
+interface EditServiceFeeDialogProps {
+    open: boolean;
+    onClose: () => void;
+    serviceFee: ServiceFeeRule;
+}
+
+export function EditServiceFeeDialog({
+    open,
+    onClose,
+    serviceFee,
+}: EditServiceFeeDialogProps) {
+    const updateServiceFee = useUpdateServiceFee();
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm<ServiceFeeFormData>({
+        resolver: zodResolver(serviceFeeSchema),
+        defaultValues: {
+            min_order_value: serviceFee.min_order_value,
+            max_order_value: serviceFee.max_order_value,
+            deposit_percent: serviceFee.deposit_percent,
+            fee_percent: serviceFee.fee_percent,
+        },
+    });
+
+    // Reset form when dialog opens with new data
+    useEffect(() => {
+        if (open) {
+            reset({
+                min_order_value: serviceFee.min_order_value,
+                max_order_value: serviceFee.max_order_value,
+                deposit_percent: serviceFee.deposit_percent,
+                fee_percent: serviceFee.fee_percent,
+            });
+        }
+    }, [open, serviceFee, reset]);
+
+    const onSubmit = async (data: ServiceFeeFormData) => {
+        try {
+            await updateServiceFee.mutateAsync({
+                id: serviceFee.id,
+                data: {
+                    min_order_value: data.min_order_value,
+                    max_order_value: data.max_order_value,
+                    deposit_percent: data.deposit_percent,
+                    fee_percent: data.fee_percent,
+                },
+            });
+
+            toast.success('Đã cập nhật phí dịch vụ thành công!');
+            onClose();
+        } catch (error) {
+            console.error('Error updating service fee:', error);
+            toast.error('Lỗi khi cập nhật phí dịch vụ. Vui lòng thử lại.');
+        }
+    };
+
+    const formatMoney = (value: number) => {
+        return new Intl.NumberFormat('vi-VN').format(value);
+    };
+
+    return (
+        <Dialog open={open} onClose={onClose} title="Chỉnh sửa phí dịch vụ">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* Method Display */}
+                <div>
+                    <Label>Phương thức</Label>
+                    <div className="px-4 py-2 bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
+                        {serviceFee.method === 'TMDT'
+                            ? 'TMDT'
+                            : serviceFee.method === 'TieuNgach'
+                                ? 'Tiểu Ngạch'
+                                : 'Chính Ngạch'}
+                    </div>
+                </div>
+
+                {/* Min Order Value */}
+                <div>
+                    <Label htmlFor="min_order_value" required>
+                        Giá trị đơn hàng tối thiểu (VND)
+                    </Label>
+                    <Input
+                        id="min_order_value"
+                        type="number"
+                        step="1"
+                        {...register('min_order_value', { valueAsNumber: true })}
+                        placeholder="0"
+                    />
+                    {errors.min_order_value && (
+                        <p className="text-sm text-red-600 mt-1">
+                            {errors.min_order_value.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Max Order Value */}
+                <div>
+                    <Label htmlFor="max_order_value" required>
+                        Giá trị đơn hàng tối đa (VND)
+                    </Label>
+                    <Input
+                        id="max_order_value"
+                        type="number"
+                        step="1"
+                        {...register('max_order_value', { valueAsNumber: true })}
+                        placeholder="999999999"
+                    />
+                    {errors.max_order_value && (
+                        <p className="text-sm text-red-600 mt-1">
+                            {errors.max_order_value.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Deposit Percent */}
+                <div>
+                    <Label htmlFor="deposit_percent" required>
+                        Đặt cọc (%)
+                    </Label>
+                    <select
+                        id="deposit_percent"
+                        {...register('deposit_percent', { valueAsNumber: true })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value={70}>70%</option>
+                        <option value={80}>80%</option>
+                    </select>
+                    {errors.deposit_percent && (
+                        <p className="text-sm text-red-600 mt-1">
+                            {errors.deposit_percent.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Fee Percent */}
+                <div>
+                    <Label htmlFor="fee_percent" required>
+                        Phí dịch vụ (%)
+                    </Label>
+                    <Input
+                        id="fee_percent"
+                        type="number"
+                        step="0.1"
+                        {...register('fee_percent', { valueAsNumber: true })}
+                        placeholder="0"
+                    />
+                    {errors.fee_percent && (
+                        <p className="text-sm text-red-600 mt-1">
+                            {errors.fee_percent.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-4">
+                    <button
+                        type="submit"
+                        disabled={updateServiceFee.isPending}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {updateServiceFee.isPending && (
+                            <Loader2 size={18} className="animate-spin" />
+                        )}
+                        {updateServiceFee.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={updateServiceFee.isPending}
+                        className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
+                    >
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </Dialog>
+    );
+}
