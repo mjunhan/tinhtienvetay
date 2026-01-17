@@ -16,7 +16,7 @@ export default function Home() {
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-text-main">
             <a href="#" className="hover:text-primary transition-colors">Hướng dẫn</a>
-            <a href="#" className="hover:text-primary transition-colors">Bảng giá</a>
+            <a href="/bang-gia" className="hover:text-primary transition-colors">Bảng giá</a>
             <a href="#" className="hover:text-primary transition-colors">Liên hệ</a>
           </nav>
         </div>
