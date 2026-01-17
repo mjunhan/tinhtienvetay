@@ -1,6 +1,6 @@
-# 🚀 Tính Tiền Về Tay v0.2.0
+# 🚀 Tính Tiền Về Tay v0.2.1
 
-> **Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với hệ thống quản trị động**
+> **Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với hệ thống quản trị động và khả năng chỉnh sửa trực tiếp**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1.2-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-blue)](https://react.dev/)
@@ -23,6 +23,12 @@
 - ⚙️ **Cài đặt động**: Thay đổi tỷ giá, hotline, Zalo link real-time
 - 💰 **Quản lý giá**: Xem tất cả phí dịch vụ và phí vận chuyển
 - 📊 **Dashboard**: Tổng quan và truy cập nhanh
+
+### ✨ v0.2.1 - Admin Editing
+- ✏️ **Chỉnh sửa trực tiếp**: Edit pricing trong UI (không cần vào Supabase)
+- 🎯 **Modal Dialog**: Form validation với Zod, loading states
+- 🔄 **Auto-refresh**: Data cập nhật tức thì sau khi edit
+- 🛡️ **Secure**: RLS policies bảo vệ quyền chỉnh sửa
 
 ---
 
@@ -76,8 +82,8 @@ Open [http://localhost:3000](http://localhost:3000)
 | `/bang-gia` | Bảng giá dịch vụ công khai | ❌ No |
 | `/admin` | Dashboard admin | ✅ Yes |
 | `/admin/login` | Đăng nhập admin | ❌ No |
-| `/admin/settings` | Cài đặt tỷ giá & hotline | ✅ Yes |
-| `/admin/pricing` | Xem bảng giá quản trị | ✅ Yes |
+| `/admin/settings` | Chỉnh sửa tỷ giá & hotline | ✅ Yes |
+| `/admin/pricing` | Chỉnh sửa bảng giá (v0.2.1) | ✅ Yes |
 
 ---
 
@@ -128,11 +134,12 @@ src/
 
 **Credentials**: Tạo trong Supabase Auth Dashboard
 
-**Default capabilities:**
+**Default capabilities (v0.2.1):**
 - View dashboard
-- Edit exchange rate
-- Update contact info (hotline, Zalo)
-- View all pricing rules
+- **Edit exchange rate, hotline, Zalo link**
+- **Edit service fees (TMDT, Tiểu Ngạch, Chính Ngạch)**
+- **Edit shipping rates (all methods and warehouses)**
+- Real-time UI updates after edits
 
 ---
 
@@ -166,7 +173,14 @@ Full schema: [supabase-schema.sql](./supabase-schema.sql)
 
 ## 🔄 Version History
 
-### v0.2.0 (2026-01-17) - Current
+### v0.2.1 (2026-01-17) - Current
+- ✅ Admin can edit all pricing directly in UI
+- ✅ Modal dialog forms with validation
+- ✅ Loading states and toast notifications
+- ✅ Automatic data refresh after mutations
+- ✅ Secure RLS policies for authenticated users
+
+### v0.2.0 (2026-01-17)
 - ✅ Supabase integration for dynamic pricing
 - ✅ Admin authentication system
 - ✅ Public pricing page (`/bang-gia`)
@@ -211,4 +225,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-Made with ❤️ using Gemini 2.5 Pro
+Made with ❤️ using Claude 3.5 Sonnet Thinking

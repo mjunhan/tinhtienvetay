@@ -3,8 +3,8 @@
 ## 📋 Tổng Quan Dự Án
 
 **Tên dự án:** `tinhtienvetay`  
-**Phiên bản:** 0.2.0  
-**Mô tả:** Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với đầy đủ các yếu tố như giá sản phẩm, tỷ giá, phí dịch vụ, phí vận chuyển quốc tế và nội địa. **v0.2.0 bổ sung hệ thống admin với Supabase và trang bảng giá công khai.**
+**Phiên bản:** 0.2.1  
+**Mô tả:** Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với đầy đủ các yếu tố như giá sản phẩm, tỷ giá, phí dịch vụ, phí vận chuyển quốc tế và nội địa. **v0.2.0 bổ sung hệ thống admin với Supabase và trang bảng giá công khai. v0.2.1 thêm khả năng chỉnh sửa trực tiếp trong Admin UI.**
 
 ---
 
@@ -36,8 +36,8 @@ d:\tinhtienvetay\
 │   ├── app/                    # Next.js App Router
 │   │   ├── admin/              # 🆕 Hệ thống quản trị
 │   │   │   ├── login/          # 🆕 Trang đăng nhập admin
-│   │   │   ├── settings/       # 🆕 Cài đặt tỷ giá & hotline
-│   │   │   ├── pricing/        # 🆕 Quản lý bảng giá
+│   │   │   ├── settings/       # ✨ Cài đặt tỷ giá & hotline (editable v0.2.1)
+│   │   │   ├── pricing/        # ✨ Quản lý bảng giá (editable v0.2.1)
 │   │   │   ├── layout.tsx      # 🆕 Layout admin với sidebar
 │   │   │   └── page.tsx        # 🆕 Dashboard admin
 │   │   ├── bang-gia/           # 🆕 Trang bảng giá công khai
@@ -50,6 +50,10 @@ d:\tinhtienvetay\
 │   │   └── page.tsx            # Trang chủ (Calculator)
 │   │
 │   ├── components/
+│   │   ├── admin/              # ✨ Admin Components (v0.2.1)
+│   │   │   └── pricing/
+│   │   │       ├── EditServiceFeeDialog.tsx    # Edit service fees
+│   │   │       └── EditShippingRateDialog.tsx  # Edit shipping rates
 │   │   ├── calculator/         # Calculator Components
 │   │   │   ├── Calculator.tsx      # Component chính (React Query)
 │   │   │   ├── InputCard.tsx       # Form nhập liệu
@@ -57,16 +61,25 @@ d:\tinhtienvetay\
 │   │   │   └── DownloadInvoice.tsx # Tải báo giá
 │   │   ├── common/             # Shared Components
 │   │   └── ui/                 # UI Components
+│   │       ├── Dialog.tsx          # ✨ Modal component (v0.2.1)
+│   │       ├── Label.tsx           # ✨ Form label (v0.2.1)
+│   │       ├── Button.tsx
+│   │       ├── Input.tsx
+│   │       └── ...
 │   │
 │   ├── hooks/
 │   │   ├── useCostCalculator.ts    # Logic tính toán
-│   │   └── usePricingRules.ts      # 🆕 React Query hooks cho pricing
+│   │   ├── usePricingRules.ts      # 🆕 React Query hooks cho pricing
+│   │   └── useAdminMutations.ts    # ✨ Mutations cho admin (v0.2.1)
 │   │
 │   ├── lib/
 │   │   ├── supabase.ts             # 🆕 Supabase client config
 │   │   ├── providers.tsx           # 🆕 React Query provider
 │   │   ├── schemas.ts              # Zod validation schemas
 │   │   └── utils.ts                # Utility functions
+│   │
+│   ├── schemas/
+│   │   └── admin.ts                # ✨ Admin form schemas (v0.2.1)
 │   │
 │   ├── types/
 │   │   ├── index.ts                # Core types
@@ -76,6 +89,11 @@ d:\tinhtienvetay\
 │
 ├── data/
 │   └── pricing.json            # ⚠️ Deprecated (moved to Supabase)
+│
+├── supabase/
+│   └── migrations/
+│       ├── 001_initial_schema.sql    # Initial schema (if separated)
+│       └── 002_update_rls_policies.sql # ✨ v0.2.1 RLS updates
 │
 ├── supabase-schema.sql         # 🆕 Database schema
 ├── supabase-seed.sql           # 🆕 Initial data
@@ -87,7 +105,7 @@ d:\tinhtienvetay\
 
 ---
 
-## 🏗️ Kiến Trúc Hệ Thống (v0.2.0)
+## 🏗️ Kiến Trúc Hệ Thống (v0.2.1)
 
 ### Architecture Diagram
 
@@ -354,6 +372,35 @@ Render responsive tables
   - Loading/Error states
 - ✅ **Real-time Updates**: Admin thay đổi → Calculator cập nhật ngay
 
+### ✨ v0.2.1 - Admin Editing Capabilities
+- ✅ **Full CRUD (Update) Operations**:
+  - Edit exchange rate, hotline, Zalo link directly in UI
+  - Edit service fee rules (min/max value, deposit %, fee %)
+  - Edit shipping rates (all methods: TMDT, Tiểu Ngạch, Chính Ngạch)
+- ✅ **Modal Dialog UX**:
+  - Edit forms open in modal dialogs
+  - Pre-filled with existing data
+  - Smooth animations (fade-in, zoom-in)
+  - Close on escape or outside click
+- ✅ **Form Validation**:
+  - React Hook Form + Zod schemas
+  - Inline error messages
+  - Prevent negative numbers
+  - Cross-field validation (min ≤ max)
+- ✅ **Enhanced UX**:
+  - Loading spinners during save
+  - Success/error toast notifications
+  - Automatic data refresh after edits
+  - VND formatting (e.g., 3,000,000)
+- ✅ **Security**:
+  - RLS policies restrict UPDATE to authenticated users
+  - Secure mutation hooks with proper error handling
+- ✅ **New Components**:
+  - `Dialog.tsx` - Reusable modal component
+  - `Label.tsx` - Form label with required indicator
+  - `EditServiceFeeDialog.tsx` - Service fee editor
+  - `EditShippingRateDialog.tsx` - Shipping rate editor with dynamic units
+
 ---
 
 ## 🔐 Authentication & Authorization
@@ -393,12 +440,21 @@ export const config = {
 - `GET /api/admin/settings` - Get settings (legacy, now uses Supabase directly)
 - `GET /api/admin/pricing` - Get pricing (legacy, now uses Supabase directly)
 
-### Supabase Direct Queries (v0.2.0)
+### Supabase Direct Queries (v0.2.0+)
 Client-side components now query Supabase directly via React Query hooks:
+
+**Read Operations:**
 - `useGlobalSettings()` - Fetch settings
 - `useServiceFeeRules()` - Fetch service fees
 - `useShippingRateRules()` - Fetch shipping rates
 - `usePricingRules()` - Fetch all pricing (transformed)
+
+**Write Operations (v0.2.1):**
+- `useUpdateGlobalSetting()` - Update exchange rate, hotline, Zalo link
+- `useUpdateServiceFee()` - Update service fee rules
+- `useUpdateShippingRate()` - Update shipping rate rules
+
+All mutations automatically invalidate related queries to trigger UI refresh.
 
 ---
 
@@ -489,24 +545,29 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive test checklist.
    - Next.js shows warning about "middleware" convention
    - Non-blocking, will migrate to "proxy" in Next.js 15
 
-2. **No Inline Editing**
-   - Admin pricing page is view-only
-   - Edit pricing via Supabase Table Editor
+2. ~~**No Inline Editing**~~ ✅ **FIXED in v0.2.1**
+   - ~~Admin pricing page is view-only~~
+   - ~~Edit pricing via Supabase Table Editor~~
+   - **Now supports full editing via UI dialogs**
 
 ---
 
 ## 🎯 Future Enhancements
 
-- [ ] Inline editing for pricing tables in admin
-- [ ] Add/delete pricing rules via admin UI
+- [x] ~~Inline editing for pricing tables in admin~~ ✅ **Completed in v0.2.1**
+- [ ] Add/delete pricing rules via admin UI (CREATE/DELETE operations)
+- [ ] Bulk import/export for pricing data via CSV
 - [ ] Real-time sync with Supabase subscriptions
 - [ ] Pricing change history/audit log
+- [ ] Version control for pricing changes
+- [ ] Price preview showing impact on sample calculations
 - [ ] Export pricing to PDF/CSV
+- [ ] Advanced table filters (search, sort, pagination)
 - [ ] Multi-language support (EN/VI)
 - [ ] Mobile app version
 
 ---
 
 **Last Updated:** 2026-01-17  
-**Version:** 0.2.0  
-**Author:** Developed with Gemini 2.5 Pro
+**Version:** 0.2.1  
+**Author:** Developed with Claude 3.5 Sonnet Thinking
