@@ -86,14 +86,6 @@ export default function BangGiaPage() {
                         rules={shippingRates || []}
                         exchangeRate={pricing?.exchange_rate || 0}
                     />
-
-                    {/* Formula Footer */}
-                    <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-slate-700 flex items-start gap-3">
-                        <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                            <strong className="text-amber-900">Công thức tính:</strong> Tổng chi phí = Tiền hàng (¥) + Ship nội địa (¥) + Phương thức vận chuyển (VNĐ) + Phí dịch vụ (%)
-                        </div>
-                    </div>
                 </motion.div>
 
                 {/* SECTION 2: NORMAL SHIPPING (VẬN CHUYỂN THƯỜNG) */}

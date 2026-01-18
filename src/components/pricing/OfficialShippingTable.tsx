@@ -1,123 +1,132 @@
 'use client';
 
 import { ShippingRateRule } from '@/types/database.types';
-import { motion } from 'framer-motion';
 
 interface OfficialShippingTableProps {
     rules: ShippingRateRule[];
     exchangeRate: number;
 }
 
-export function OfficialShippingTable({ rules, exchangeRate }: OfficialShippingTableProps) {
-    const formatMoney = (value: number) => {
-        return new Intl.NumberFormat('vi-VN').format(value);
-    };
-
-    // Filter for ChinhNgach method only
-    const officialRules = rules.filter(rule => rule.method === 'ChinhNgach');
-
-    // Split by type
-    const weightRules = officialRules.filter(r => r.type === 'weight_based');
-    const volumeRules = officialRules.filter(r => r.type === 'volume_based');
-
-    const renderTableRows = (rulesList: ShippingRateRule[], unit: string) => {
-        return rulesList.map((rule, idx) => {
-            const priceHN = rule.price;
-            const priceHCM = rule.price;
-
-            return (
-                <motion.tr
-                    key={idx}
-                    className="border-b border-slate-200 hover:bg-slate-50/50 transition-colors"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                >
-                    <td className="py-3 px-3 text-center text-sm">
-                        {rule.max_value > 1000000
-                            ? `Trên ${formatMoney(rule.min_value)}`
-                            : `${formatMoney(rule.min_value)} - ${formatMoney(rule.max_value)}`}
-                    </td>
-                    <td className="py-3 px-3 text-center font-bold text-red-600">
-                        {formatMoney(priceHN)}₫/{unit}
-                    </td>
-                    <td className="py-3 px-3 text-center font-bold text-red-600">
-                        {formatMoney(priceHCM)}₫/{unit}
-                    </td>
-                </motion.tr>
-            );
-        });
+export function OfficialShippingTable({ rules }: OfficialShippingTableProps) {
+    /**
+     * Helper function to find price for a specific rule
+     * Matches by method, type, warehouse, and min_value
+     */
+    const findPrice = (
+        type: 'weight_based' | 'volume_based',
+        min: number,
+        warehouse: 'HN' | 'HCM'
+    ): string => {
+        const rule = rules.find(
+            (r) =>
+                r.method === 'ChinhNgach' &&
+                r.type === type &&
+                r.warehouse === warehouse &&
+                r.min_value === min
+        );
+        return rule ? rule.price.toLocaleString('vi-VN') : '---';
     };
 
     return (
-        <div className="border-2 border-[#003B70] rounded-xl overflow-hidden shadow-lg">
-            {/* Main Header */}
-            <div className="bg-[#003B70] text-white text-center py-4 font-bold text-xl uppercase tracking-wide">
+        <div className="w-full max-w-4xl mx-auto border-2 border-[#003B70] text-[#003B70] rounded-lg overflow-hidden shadow-lg">
+            {/* MAIN HEADER */}
+            <div className="bg-[#003B70] text-white font-bold text-center py-3 text-xl uppercase tracking-wide">
                 LINE CHÍNH NGẠCH
             </div>
 
-            {/* Two-Column Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x-2 divide-[#003B70]">
-                {/* COLUMN 1: HEAVY GOODS */}
-                <div>
-                    <div className="bg-[#FFD966] text-[#003B70] text-center py-3 font-bold border-b-2 border-[#003B70]">
+            <div className="flex flex-col md:flex-row">
+                {/* --- LEFT COLUMN: HÀNG NẶNG (Weight) --- */}
+                <div className="w-full md:w-1/2 border-r-0 md:border-r-2 md:border-[#003B70]">
+                    <div className="bg-[#FFD966] font-bold text-center py-2 border-b-2 border-[#003B70]">
                         ĐỐI VỚI HÀNG NẶNG
                     </div>
-                    <table className="w-full">
+                    <table className="w-full text-sm font-medium">
                         <thead>
-                            <tr className="bg-[#003B70] text-white text-sm">
-                                <th className="py-2 px-3 border-r border-white/30">Số lượng (kg)</th>
-                                <th className="py-2 px-3 border-r border-white/30">Hà Nội</th>
-                                <th className="py-2 px-3">Hồ Chí Minh</th>
+                            <tr className="bg-[#003B70] text-white">
+                                <th className="py-2 border-r border-white/30 w-1/3">Số lượng (kg)</th>
+                                <th className="py-2 border-r border-white/30 w-1/3">Hà Nội</th>
+                                <th className="py-2 w-1/3">Hồ Chí Minh</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {weightRules.length > 0 ? (
-                                renderTableRows(weightRules, 'kg')
-                            ) : (
-                                <tr>
-                                    <td colSpan={3} className="py-4 text-center text-slate-400 text-sm">
-                                        Chưa có dữ liệu
-                                    </td>
-                                </tr>
-                            )}
+                        <tbody className="divide-y divide-[#003B70]">
+                            {/* ROW 1: 70-500 */}
+                            <tr>
+                                <td className="py-2 pl-4 font-bold text-[#003B70]">70kg - 500kg</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('weight_based', 70, 'HN')}₫</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('weight_based', 70, 'HCM')}₫</td>
+                            </tr>
+                            {/* ROW 2: 500-1000 */}
+                            <tr className="bg-[#F2F2F2]">
+                                <td className="py-2 pl-4 font-bold text-[#003B70]">500kg - 1000kg</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('weight_based', 500, 'HN')}₫</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('weight_based', 500, 'HCM')}₫</td>
+                            </tr>
+                            {/* ROW 3: > 1000 */}
+                            <tr>
+                                <td className="py-2 pl-4 font-bold text-[#003B70]">Trên 1000kg</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('weight_based', 1000, 'HN')}₫</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('weight_based', 1000, 'HCM')}₫</td>
+                            </tr>
+                            {/* ROW 4: > 2000 */}
+                            <tr className="bg-[#F2F2F2]">
+                                <td className="py-2 pl-4 font-bold text-[#003B70]">Trên 2000kg</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('weight_based', 2000, 'HN')}₫</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('weight_based', 2000, 'HCM')}₫</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
 
-                {/* COLUMN 2: BULKY GOODS */}
-                <div>
-                    <div className="bg-[#FFD966] text-[#003B70] text-center py-3 font-bold border-b-2 border-[#003B70]">
+                {/* --- RIGHT COLUMN: HÀNG CỒNG KỀNH (Volume) --- */}
+                <div className="w-full md:w-1/2">
+                    <div className="bg-[#FFD966] font-bold text-center py-2 border-b-2 border-[#003B70]">
                         ĐỐI VỚI HÀNG CỒNG KỀNH
                     </div>
-                    <table className="w-full">
+                    <table className="w-full text-sm font-medium">
                         <thead>
-                            <tr className="bg-[#003B70] text-white text-sm">
-                                <th className="py-2 px-3 border-r border-white/30">Số lượng (m³)</th>
-                                <th className="py-2 px-3 border-r border-white/30">Hà Nội</th>
-                                <th className="py-2 px-3">Hồ Chí Minh</th>
+                            <tr className="bg-[#003B70] text-white">
+                                <th className="py-2 border-r border-white/30 w-1/3">Số lượng (m³)</th>
+                                <th className="py-2 border-r border-white/30 w-1/3">Hà Nội</th>
+                                <th className="py-2 w-1/3">Hồ Chí Minh</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {volumeRules.length > 0 ? (
-                                renderTableRows(volumeRules, 'm³')
-                            ) : (
-                                <tr>
-                                    <td colSpan={3} className="py-4 text-center text-slate-400 text-sm">
-                                        Chưa có dữ liệu
-                                    </td>
-                                </tr>
-                            )}
+                        <tbody className="divide-y divide-[#003B70]">
+                            {/* ROW 1: < 10 */}
+                            <tr>
+                                <td className="py-2 pl-4 font-bold text-[#003B70]">Dưới 10m³</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('volume_based', 0, 'HN')}₫</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('volume_based', 0, 'HCM')}₫</td>
+                            </tr>
+                            {/* ROW 2: > 10 */}
+                            <tr className="bg-[#F2F2F2]">
+                                <td className="py-2 pl-4 font-bold text-[#003B70]">Trên 10m³</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('volume_based', 10, 'HN')}₫</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('volume_based', 10, 'HCM')}₫</td>
+                            </tr>
+                            {/* ROW 3: > 20 */}
+                            <tr>
+                                <td className="py-2 pl-4 font-bold text-[#003B70]">Trên 20m³</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('volume_based', 20, 'HN')}₫</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('volume_based', 20, 'HCM')}₫</td>
+                            </tr>
+                            {/* ROW 4: > 30 */}
+                            <tr className="bg-[#F2F2F2]">
+                                <td className="py-2 pl-4 font-bold text-[#003B70]">Trên 30m³</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('volume_based', 30, 'HN')}₫</td>
+                                <td className="py-2 text-center text-[#C00000] font-bold">{findPrice('volume_based', 30, 'HCM')}₫</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Footer Note */}
-            <div className="bg-[#FFF2CC] border-t-2 border-[#003B70] p-4 text-xs text-center text-[#003B70]">
-                <p className="italic">
-                    <strong>Lưu ý:</strong> Tổng chi phí bao gồm = Tiền hàng + Phí mua hàng (1%) + Phí vận chuyển + Các chi phí phát sinh khác (nếu có)
-                </p>
+            {/* FOOTER NOTE */}
+            <div className="bg-[#FFF2CC] p-4 text-xs md:text-sm text-[#003B70] italic text-center border-t-2 border-[#003B70]">
+                <strong>Lưu ý:</strong> Tổng chi phí bao gồm = Tiền hàng + Phí mua hàng (1%) + Ship nội địa TQ (nếu có) + Phí ủy thác (1%) + Thuế (VAT + Nhập khẩu nếu có) + Cước vận chuyển.
+                <br />
+                <span className="text-[10px] md:text-xs mt-1 inline-block">
+                    * Phí ủy thác: đối với invoice dưới 30tr mặc định thu ủy thác 300k/1 mục khai.
+                </span>
             </div>
         </div>
     );
