@@ -114,7 +114,7 @@ export function EditServiceFeeDialog({
                     <Input
                         id="min_order_value"
                         type="number"
-                        step="1"
+                        step="any"
                         {...register('min_order_value')}
                         placeholder="0"
                     />
@@ -133,7 +133,7 @@ export function EditServiceFeeDialog({
                     <Input
                         id="max_order_value"
                         type="number"
-                        step="1"
+                        step="any"
                         {...register('max_order_value')}
                         placeholder="999999999"
                     />
@@ -172,7 +172,7 @@ export function EditServiceFeeDialog({
                     <Input
                         id="fee_percent"
                         type="number"
-                        step="0.1"
+                        step="any"
                         {...register('fee_percent')}
                         placeholder="0"
                     />

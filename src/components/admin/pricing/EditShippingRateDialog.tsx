@@ -148,7 +148,7 @@ export function EditShippingRateDialog({
                     <Input
                         id="min_value"
                         type="number"
-                        step={shippingRate.type === 'value_based' ? '1' : '0.01'}
+                        step="any"
                         {...register('min_value')}
                         placeholder="0"
                     />
@@ -167,7 +167,7 @@ export function EditShippingRateDialog({
                     <Input
                         id="max_value"
                         type="number"
-                        step={shippingRate.type === 'value_based' ? '1' : '0.01'}
+                        step="any"
                         {...register('max_value')}
                         placeholder="999999999"
                     />
@@ -186,7 +186,7 @@ export function EditShippingRateDialog({
                     <Input
                         id="price"
                         type="number"
-                        step="1"
+                        step="any"
                         {...register('price')}
                         placeholder="0"
                     />
