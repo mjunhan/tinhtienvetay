@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -27,7 +27,7 @@ export function EditServiceFeeDialog({
     const updateServiceFee = useUpdateServiceFee();
 
     const {
-        register,
+        control,
         handleSubmit,
         reset,
         formState: { errors },
@@ -56,6 +56,7 @@ export function EditServiceFeeDialog({
 
     const onSubmit = async (data: ServiceFeeFormData) => {
         try {
+            console.log('[EditServiceFeeDialog] 🚀 FORM SUBMIT PAYLOAD:', data);
             console.log('[EditServiceFeeDialog] Submitting:', data);
 
             await updateServiceFee.mutateAsync({
@@ -111,12 +112,23 @@ export function EditServiceFeeDialog({
                     <Label htmlFor="min_order_value" required>
                         Giá trị đơn hàng tối thiểu (VND)
                     </Label>
-                    <Input
-                        id="min_order_value"
-                        type="number"
-                        step="any"
-                        {...register('min_order_value')}
-                        placeholder="0"
+                    <Controller
+                        control={control}
+                        name="min_order_value"
+                        render={({ field: { onChange, value, ...fieldProps } }) => (
+                            <Input
+                                {...fieldProps}
+                                id="min_order_value"
+                                type="number"
+                                step="any"
+                                placeholder="0"
+                                value={value ?? ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    onChange(val === '' ? 0 : Number(val));
+                                }}
+                            />
+                        )}
                     />
                     {errors.min_order_value && (
                         <p className="text-sm text-red-600 mt-1">
@@ -130,12 +142,23 @@ export function EditServiceFeeDialog({
                     <Label htmlFor="max_order_value" required>
                         Giá trị đơn hàng tối đa (VND)
                     </Label>
-                    <Input
-                        id="max_order_value"
-                        type="number"
-                        step="any"
-                        {...register('max_order_value')}
-                        placeholder="999999999"
+                    <Controller
+                        control={control}
+                        name="max_order_value"
+                        render={({ field: { onChange, value, ...fieldProps } }) => (
+                            <Input
+                                {...fieldProps}
+                                id="max_order_value"
+                                type="number"
+                                step="any"
+                                placeholder="999999999"
+                                value={value ?? ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    onChange(val === '' ? 0 : Number(val));
+                                }}
+                            />
+                        )}
                     />
                     {errors.max_order_value && (
                         <p className="text-sm text-red-600 mt-1">
@@ -149,14 +172,22 @@ export function EditServiceFeeDialog({
                     <Label htmlFor="deposit_percent" required>
                         Đặt cọc (%)
                     </Label>
-                    <select
-                        id="deposit_percent"
-                        {...register('deposit_percent')}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value={70}>70%</option>
-                        <option value={80}>80%</option>
-                    </select>
+                    <Controller
+                        control={control}
+                        name="deposit_percent"
+                        render={({ field: { onChange, value, ...fieldProps } }) => (
+                            <select
+                                {...fieldProps}
+                                id="deposit_percent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                value={value}
+                                onChange={(e) => onChange(Number(e.target.value))}
+                            >
+                                <option value={70}>70%</option>
+                                <option value={80}>80%</option>
+                            </select>
+                        )}
+                    />
                     {errors.deposit_percent && (
                         <p className="text-sm text-red-600 mt-1">
                             {errors.deposit_percent.message}
@@ -169,12 +200,23 @@ export function EditServiceFeeDialog({
                     <Label htmlFor="fee_percent" required>
                         Phí dịch vụ (%)
                     </Label>
-                    <Input
-                        id="fee_percent"
-                        type="number"
-                        step="any"
-                        {...register('fee_percent')}
-                        placeholder="0"
+                    <Controller
+                        control={control}
+                        name="fee_percent"
+                        render={({ field: { onChange, value, ...fieldProps } }) => (
+                            <Input
+                                {...fieldProps}
+                                id="fee_percent"
+                                type="number"
+                                step="any"
+                                placeholder="0"
+                                value={value ?? ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    onChange(val === '' ? 0 : Number(val));
+                                }}
+                            />
+                        )}
                     />
                     {errors.fee_percent && (
                         <p className="text-sm text-red-600 mt-1">

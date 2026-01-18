@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -27,7 +27,7 @@ export function EditShippingRateDialog({
     const updateShippingRate = useUpdateShippingRate();
 
     const {
-        register,
+        control,
         handleSubmit,
         reset,
         formState: { errors },
@@ -54,6 +54,7 @@ export function EditShippingRateDialog({
 
     const onSubmit = async (data: ShippingRateFormData) => {
         try {
+            console.log('[EditShippingRateDialog] 🚀 FORM SUBMIT PAYLOAD:', data);
             console.log('[EditShippingRateDialog] Submitting:', data);
 
             await updateShippingRate.mutateAsync({
@@ -145,12 +146,23 @@ export function EditShippingRateDialog({
                     <Label htmlFor="min_value" required>
                         Giá trị tối thiểu ({getUnit()})
                     </Label>
-                    <Input
-                        id="min_value"
-                        type="number"
-                        step="any"
-                        {...register('min_value')}
-                        placeholder="0"
+                    <Controller
+                        control={control}
+                        name="min_value"
+                        render={({ field: { onChange, value, ...fieldProps } }) => (
+                            <Input
+                                {...fieldProps}
+                                id="min_value"
+                                type="number"
+                                step="any"
+                                placeholder="0"
+                                value={value ?? ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    onChange(val === '' ? 0 : Number(val));
+                                }}
+                            />
+                        )}
                     />
                     {errors.min_value && (
                         <p className="text-sm text-red-600 mt-1">
@@ -164,12 +176,23 @@ export function EditShippingRateDialog({
                     <Label htmlFor="max_value" required>
                         Giá trị tối đa ({getUnit()})
                     </Label>
-                    <Input
-                        id="max_value"
-                        type="number"
-                        step="any"
-                        {...register('max_value')}
-                        placeholder="999999999"
+                    <Controller
+                        control={control}
+                        name="max_value"
+                        render={({ field: { onChange, value, ...fieldProps } }) => (
+                            <Input
+                                {...fieldProps}
+                                id="max_value"
+                                type="number"
+                                step="any"
+                                placeholder="999999999"
+                                value={value ?? ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    onChange(val === '' ? 0 : Number(val));
+                                }}
+                            />
+                        )}
                     />
                     {errors.max_value && (
                         <p className="text-sm text-red-600 mt-1">
@@ -181,14 +204,25 @@ export function EditShippingRateDialog({
                 {/* Price */}
                 <div>
                     <Label htmlFor="price" required>
-                        Giá ({getPriceUnit()})
+                        Giá (VND/{getUnit()})
                     </Label>
-                    <Input
-                        id="price"
-                        type="number"
-                        step="any"
-                        {...register('price')}
-                        placeholder="0"
+                    <Controller
+                        control={control}
+                        name="price"
+                        render={({ field: { onChange, value, ...fieldProps } }) => (
+                            <Input
+                                {...fieldProps}
+                                id="price"
+                                type="number"
+                                step="any"
+                                placeholder="0"
+                                value={value ?? ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    onChange(val === '' ? 0 : Number(val));
+                                }}
+                            />
+                        )}
                     />
                     {errors.price && (
                         <p className="text-sm text-red-600 mt-1">{errors.price.message}</p>
