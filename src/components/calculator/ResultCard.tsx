@@ -159,7 +159,7 @@ export function ResultCard({ breakdown, method, settings }: ResultCardProps) {
                         href={registerLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full py-3 px-4 bg-primary text-white font-bold rounded-full hover:bg-primary-hover shadow-lg shadow-primary/30 transition-all transform hover:-translate-y-0.5 text-sm flex items-center justify-center gap-2"
+                        className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-full shadow-lg shadow-amber-500/20 transition-all transform hover:-translate-y-0.5 text-sm flex items-center justify-center gap-2"
                     >
                         LÊN ĐƠN NGAY <ArrowRight className="w-4 h-4" />
                     </a>
