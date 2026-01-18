@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer, staggerItem, scaleOnHover } from "@/components/ui/motion-primitives";
-import { Phone, MessageCircle, MapPin, Send, Mail } from "lucide-react";
+import { Phone, MessageCircle, MapPin, Send, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const contactFormSchema = z.object({
     name: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
@@ -44,6 +45,17 @@ export default function ContactPage() {
     return (
         <div className="min-h-screen bg-amber-50 py-16">
             <div className="container mx-auto px-4 max-w-6xl">
+                {/* Back to Home Navigation */}
+                <div className="mb-6">
+                    <Link
+                        href="/"
+                        className="inline-flex items-center text-amber-600 hover:text-amber-700 font-medium transition-colors gap-2"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Quay lại trang tính tiền
+                    </Link>
+                </div>
+
                 {/* Hero Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

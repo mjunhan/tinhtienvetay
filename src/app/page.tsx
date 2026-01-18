@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import Calculator from "@/components/calculator/Calculator";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { fadeIn } from "@/components/ui/motion-primitives";
 import Link from "next/link";
-import { Calculator as CalcIcon, BookOpen, Phone } from "lucide-react";
+import { Calculator as CalcIcon, BookOpen, Phone, Menu, X } from "lucide-react";
 
 export default function Home() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <main className="min-h-screen bg-amber-50 pb-20">
       {/* Header / Navbar with Glassmorphism */}
@@ -25,7 +28,7 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Navigation */}
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
             <Link
               href="/meo-nhap-hang"
@@ -48,7 +51,60 @@ export default function Home() {
               Liên hệ
             </Link>
           </nav>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 text-slate-700 hover:text-amber-600 transition-colors"
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden bg-white/95 backdrop-blur-md border-t border-amber-100"
+            >
+              <nav className="container mx-auto px-4 py-4 space-y-2">
+                <Link
+                  href="/"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-3 text-slate-700 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-colors font-semibold"
+                >
+                  🏠 Trang chủ
+                </Link>
+                <Link
+                  href="/meo-nhap-hang"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-3 text-slate-700 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-colors font-semibold"
+                >
+                  📚 Mẹo nhập hàng
+                </Link>
+                <Link
+                  href="/bang-gia"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-3 text-slate-700 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-colors font-semibold"
+                >
+                  💰 Bảng giá
+                </Link>
+                <Link
+                  href="/lien-he"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg font-semibold text-center"
+                >
+                  📞 Liên hệ
+                </Link>
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Hero Section */}
