@@ -1,4 +1,4 @@
-import { Control, useFieldArray, UseFormRegister, FieldErrors, useFormContext } from 'react-hook-form';
+import { Control, useFieldArray, UseFormRegister, FieldErrors } from 'react-hook-form';
 import { Plus, Trash2, Package, Ruler } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
@@ -7,21 +7,21 @@ import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { CalculatorFormValues } from '@/lib/schemas';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ShippingMethod } from '@/types';
 
 interface InputCardProps {
     control: Control<CalculatorFormValues>;
     register: UseFormRegister<CalculatorFormValues>;
     errors: FieldErrors<CalculatorFormValues>;
+    method: ShippingMethod;
 }
 
-export function InputCard({ control, register, errors }: InputCardProps) {
+export function InputCard({ control, register, errors, method }: InputCardProps) {
     const { fields, append, remove } = useFieldArray({
         control,
         name: "products"
     });
 
-    const { watch } = useFormContext<CalculatorFormValues>();
-    const method = watch('method');
     const showDimensions = method === 'TieuNgach' || method === 'ChinhNgach';
 
     return (

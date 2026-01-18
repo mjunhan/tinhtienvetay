@@ -110,7 +110,7 @@ export default function Calculator() {
                 {/* Left Column: Inputs */}
                 <div className="lg:col-span-7 space-y-6">
                     <form onSubmit={handleSubmit(onSubmit)}>
-                        <InputCard control={control} register={register} errors={errors} />
+                        <InputCard control={control} register={register} errors={errors} method={formValues.method || 'TMDT'} />
 
                         {/* Honeypot Field - Hidden from humans */}
                         <div className="opacity-0 absolute top-0 left-0 h-0 w-0 -z-50 overflow-hidden">
