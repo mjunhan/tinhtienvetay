@@ -60,7 +60,7 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => append({ id: crypto.randomUUID(), quantity: 1, price_cny: 0, weight_kg: 0 })}
+                            onClick={() => append({ id: crypto.randomUUID(), quantity: 1, price_cny: 0, weight_kg: 0, internal_ship_cny: 0 })}
                             className="text-primary hover:bg-violet-50"
                         >
                             <Plus className="w-4 h-4 mr-1" />
@@ -151,6 +151,20 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                                             error={errors.products?.[index]?.weight_kg?.message}
                                             className="bg-white"
                                         />
+                                        <div>
+                                            <div className="flex items-center mb-1.5">
+                                                <label className="text-sm font-medium text-text-main/80">Ship nội địa</label>
+                                                <span className="ml-1 text-xs text-slate-400 font-normal">(Tùy chọn)</span>
+                                            </div>
+                                            <Input
+                                                type="number"
+                                                step={0.01}
+                                                suffix="¥"
+                                                placeholder="0"
+                                                {...register(`products.${index}.internal_ship_cny`, { valueAsNumber: true })}
+                                                className="bg-white"
+                                            />
+                                        </div>
                                     </div>
                                 </motion.div>
                             ))}
@@ -161,21 +175,6 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                             </div>
                         )}
                     </div>
-                </div>
-
-                {/* 3. Logistics Inputs */}
-                <div>
-                    <div className="flex items-center mb-1.5">
-                        <label className="text-sm font-medium text-text-main">Phí ship nội địa TQ (¥)</label>
-                        <span className="ml-1 text-xs text-slate-400 font-normal">(Tùy chọn)</span>
-                    </div>
-                    <Input
-                        type="number"
-                        placeholder="0"
-                        suffix="¥"
-                        {...register('internal_ship_cny', { valueAsNumber: true })}
-                        className="bg-slate-50"
-                    />
                 </div>
             </Card>
 

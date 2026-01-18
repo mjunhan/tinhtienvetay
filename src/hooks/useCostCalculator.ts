@@ -8,7 +8,6 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
             method,
             deposit,
             products,
-            internal_ship_cny,
         } = details;
 
         // Default implementation if no data loaded yet
@@ -34,6 +33,7 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
         let total_product_cny = 0;
         let total_items = 0;
         let sum_product_weight = 0;
+        let sum_internal_ship_cny = 0;
 
         products.forEach((p) => {
             const price = (p.negotiated_price_cny && p.negotiated_price_cny > 0)
@@ -43,12 +43,14 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
             total_product_cny += price * (p.quantity || 0);
             sum_product_weight += (p.weight_kg || 0) * (p.quantity || 0);
             total_items += (p.quantity || 0);
+            // Sum internal shipping (per product line)
+            sum_internal_ship_cny += (p.internal_ship_cny || 0);
         });
 
         const total_weight_kg = sum_product_weight;
         const exchange_rate = pricingData.exchange_rate;
         const total_product_vnd = total_product_cny * exchange_rate;
-        const internal_ship_vnd = (internal_ship_cny || 0) * exchange_rate;
+        const internal_ship_vnd = sum_internal_ship_cny * exchange_rate;
 
         // 2. Pricing Logic
         let service_fee_percent = 0;

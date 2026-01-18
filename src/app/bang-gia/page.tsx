@@ -205,16 +205,19 @@ export default function BangGiaPage() {
                             <table className="w-full text-sm">
                                 <thead className="bg-slate-900 text-white">
                                     <tr>
-                                        <th className="py-4 px-6 text-left" rowSpan={2}>Giá trị đơn hàng</th>
-                                        <th className="py-4 px-6 text-center" rowSpan={2}>Phí mua hàng<br /><span className="text-xs font-normal opacity-70">(Cọc 80%)</span></th>
-                                        <th className="py-2 px-4 text-center border-b border-slate-700" colSpan={2}>Hà Nội</th>
+                                        <th className="py-4 px-6 text-left border-r border-slate-700" rowSpan={2}>Tiền hàng/Shop</th>
+                                        <th className="py-4 px-6 text-center border-r border-slate-700" rowSpan={2}>
+                                            Phí mua hàng<br />
+                                            <span className="text-xs font-normal opacity-80">(Cọc 80%)</span>
+                                        </th>
+                                        <th className="py-2 px-4 text-center border-b border-slate-700 border-r border-slate-700" colSpan={2}>Hà Nội</th>
                                         <th className="py-2 px-4 text-center border-b border-slate-700" colSpan={2}>Hồ Chí Minh</th>
                                     </tr>
                                     <tr>
-                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium">Cân thực</th>
-                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium text-slate-400">Quy đổi</th>
-                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium">Cân thực</th>
-                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium text-slate-400">Quy đổi</th>
+                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium border-r border-slate-700">Cân thực</th>
+                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium border-r border-slate-700">Cân quy đổi</th>
+                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium border-r border-slate-700">Cân thực</th>
+                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium">Cân quy đổi</th>
                                     </tr>
                                 </thead>
                                 <motion.tbody
@@ -227,27 +230,41 @@ export default function BangGiaPage() {
                                     whileInView="show"
                                     viewport={{ once: true }}
                                 >
-                                    {pricing?.normal_shipping.map((tier, idx) => (
-                                        <motion.tr
-                                            key={idx}
-                                            className="hover:bg-green-50/30 transition-colors"
-                                            variants={{
-                                                hidden: { opacity: 0, x: -10 },
-                                                show: { opacity: 1, x: 0 }
-                                            }}
-                                        >
-                                            <td className="py-4 px-6 font-medium text-slate-700">
-                                                {tier.max_value > 1000000000 ? `Trên ${formatMoney(tier.min_value)}₫` : `${formatMoney(tier.min_value)} - ${formatMoney(tier.max_value)}₫`}
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-xs">{tier.fee_percent}%</span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center font-bold text-slate-900">{formatMoney(tier.hn_actual)}</td>
-                                            <td className="py-4 px-6 text-center text-slate-400">{formatMoney(tier.hn_converted || tier.hn_actual + 2000)}</td>
-                                            <td className="py-4 px-6 text-center font-bold text-slate-900">{formatMoney(tier.hcm_actual)}</td>
-                                            <td className="py-4 px-6 text-center text-slate-400">{formatMoney(tier.hcm_converted || tier.hcm_actual + 2000)}</td>
-                                        </motion.tr>
-                                    ))}
+                                    {/* Row 1: 0 - 2 triệu */}
+                                    <motion.tr className="hover:bg-green-50/30 transition-colors">
+                                        <td className="py-4 px-6 font-medium text-slate-900">0 - 2 triệu</td>
+                                        <td className="py-4 px-6 text-center border-l border-slate-100">
+                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">3%</span>
+                                        </td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">19.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">21.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">24.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">26.000</td>
+                                    </motion.tr>
+
+                                    {/* Row 2: 2 - 5 triệu */}
+                                    <motion.tr className="hover:bg-green-50/30 transition-colors">
+                                        <td className="py-4 px-6 font-medium text-slate-900">2 - 5 triệu</td>
+                                        <td className="py-4 px-6 text-center border-l border-slate-100">
+                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">1.5%</span>
+                                        </td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">14.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">16.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">19.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">21.000</td>
+                                    </motion.tr>
+
+                                    {/* Row 3: > 5 triệu */}
+                                    <motion.tr className="hover:bg-green-50/30 transition-colors">
+                                        <td className="py-4 px-6 font-medium text-slate-900">{'>'} 5 triệu</td>
+                                        <td className="py-4 px-6 text-center border-l border-slate-100">
+                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">1.2%</span>
+                                        </td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">8.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">10.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">12.000</td>
+                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">14.000</td>
+                                    </motion.tr>
                                 </motion.tbody>
                             </table>
                         </div>

@@ -10,6 +10,10 @@ export const productSchema = z.object({
         (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
         z.number().min(0).optional()
     ),
+    internal_ship_cny: z.preprocess(
+        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+        z.number().min(0).optional()
+    ),
     weight_kg: z.preprocess(
         (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
         z.number().min(0).optional()
@@ -21,10 +25,6 @@ export const calculatorSchema = z.object({
     method: z.enum(['TMDT', 'TieuNgach', 'ChinhNgach']),
     deposit: z.literal(70).or(z.literal(80)),
     products: z.array(productSchema).min(1, 'Cần ít nhất 1 sản phẩm'),
-    internal_ship_cny: z.preprocess(
-        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
-        z.number().min(0).optional()
-    ),
     customerName: z.string().min(1, 'Vui lòng nhập họ tên'),
     customerPhone: z.string().regex(/^(0|84)(3|5|7|8|9)[0-9]{8}$/, 'Số điện thoại không hợp lệ'),
     bot_check: z.string().optional(), // Honeypot field

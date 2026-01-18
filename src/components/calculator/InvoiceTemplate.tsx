@@ -137,7 +137,7 @@ export function InvoiceTemplate({ id, details, breakdown }: InvoiceTemplateProps
                                     <p className="font-semibold text-slate-800">Phí ship nội địa TQ</p>
                                 </td>
                                 <td className="py-3 px-4 text-right text-slate-600">
-                                    {formatCNY(details.internal_ship_cny || 0)}
+                                    {formatCNY(details.products.reduce((acc, p) => acc + (p.internal_ship_cny || 0), 0))}
                                 </td>
                                 <td className="py-3 px-4 text-right font-medium text-slate-800">
                                     {formatMoney(breakdown.internal_ship_vnd)}

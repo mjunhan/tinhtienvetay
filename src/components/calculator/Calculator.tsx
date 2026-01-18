@@ -41,7 +41,6 @@ export default function Calculator() {
                     link: ''
                 }
             ],
-            internal_ship_cny: undefined,
             customerName: '',
             customerPhone: ''
         },
@@ -66,8 +65,7 @@ export default function Calculator() {
         warehouse: (formValues.warehouse || 'HN') as 'HN' | 'HCM',
         method: (formValues.method || 'TMDT') as 'TMDT' | 'TieuNgach' | 'ChinhNgach',
         deposit: (formValues.deposit || 70) as 70 | 80,
-        products: (formValues.products || []) as { id: string; quantity: number; price_cny: number; negotiated_price_cny?: number; weight_kg?: number; name?: string; link?: string }[],
-        internal_ship_cny: formValues.internal_ship_cny ?? 0,
+        products: (formValues.products || []) as { id: string; quantity: number; price_cny: number; negotiated_price_cny?: number; weight_kg?: number; internal_ship_cny?: number; name?: string; link?: string }[],
         customerName: formValues.customerName || '',
         customerPhone: formValues.customerPhone || ''
     };

@@ -7,6 +7,7 @@ export interface Product {
   quantity: number;
   price_cny: number;
   negotiated_price_cny?: number;
+  internal_ship_cny?: number;
   weight_kg?: number;
   name?: string;
   image_url?: string;
@@ -18,7 +19,6 @@ export interface OrderDetails {
   method: ShippingMethod;
   deposit: DepositPercent;
   products: Product[];
-  internal_ship_cny?: number;
   customerName?: string;
   customerPhone?: string;
 }

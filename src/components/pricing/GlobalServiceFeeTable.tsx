@@ -91,7 +91,7 @@ export function GlobalServiceFeeTable() {
                     <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                     <div>
                         <p className="font-bold">LƯU Ý:</p>
-                        <p>Giá trị tiền hàng để tính phí dịch vụ được tính trên tổng giá trị đơn hàng (không tách lẻ từng link).</p>
+                        <p>Giá trị tiền hàng để tính phí dịch vụ được tính trên tổng tiền hàng theo đơn hàng từng shop Trung Quốc.</p>
                     </div>
                 </div>
             </div>
