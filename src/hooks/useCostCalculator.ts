@@ -54,6 +54,24 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
         let service_fee_percent = 0;
         let shipping_rate_vnd = 0;
 
+        // --- GLOBAL SERVICE FEE LOGIC (Applied to ALL methods) ---
+        // Logic:
+        // < 2M: Deposit < 80% (5%), >= 80% (3%)
+        // 2M - 5M: Deposit < 80% (2%), >= 80% (1.5%)
+        // > 5M: Deposit < 80% (1.5%), >= 80% (1.2%)
+
+        const isHighDeposit = deposit >= 80;
+
+        if (total_product_vnd < 2_000_000) {
+            service_fee_percent = isHighDeposit ? 3 : 5;
+        } else if (total_product_vnd >= 2_000_000 && total_product_vnd <= 5_000_000) {
+            service_fee_percent = isHighDeposit ? 1.5 : 2;
+        } else {
+            // > 5M
+            service_fee_percent = isHighDeposit ? 1.2 : 1.5;
+        }
+
+        // --- SHIPPING RATE LOGIC ---
         if (method === 'TMDT') {
             // TMDT Logic
             // STRICT: Use Actual Weight (total_weight_kg) for TMĐT
@@ -62,21 +80,25 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
             ) || pricingData.tmdt_shipping[pricingData.tmdt_shipping.length - 1];
 
             if (tier) {
-                service_fee_percent = tier.fee_percent;
                 shipping_rate_vnd = warehouse === 'HN' ? tier.hn_actual : tier.hcm_actual;
             }
         } else if (method === 'ChinhNgach') {
             // Official Logic (Heavy)
-            // Service Fee: 1% of total invoice value
-            // Exception: If invoice < 30tr, min fee is 300k
-
-            if (total_product_vnd < 30_000_000 && total_product_vnd > 0) {
-                // Fixed fee 300k case
-                // We will set percent to 0 here and handle the fixed value below to avoid breakdown confusion
-                service_fee_percent = 0;
-            } else {
-                service_fee_percent = 1;
-            }
+            // Note: Official line might have specific delegate fees. 
+            // If the user wants the "Global Fee" to replace the 1% fee, we stick to the calculated above.
+            // If there's an Override for MIN 300k, we should check if that still applies.
+            // Requirement says: "Global Service Fee Policy... applies to all shipping methods".
+            // So we will use the tiered percent primarily.
+            // However, typically Official Line has a "Delegate Fee" which might be distinct.
+            // Given "replace method-specific logic where applicable", I will prioritize the tiered fee.
+            // But I will keep the "Min 300k" rule if the calculated fee is excessively low for an Official order?
+            // Actually, for Official Line, usually the "Delegate Fee" IS the service fee.
+            // The previous requirement (v0.4.1) said "1% min 300k". 
+            // The NEW requirement (v0.4.2) says "strictly implement a Global Service Fee Policy... replacing method-specific logic".
+            // So I will apply the tiered logic.
+            // BUT, if I strictly ignore the 300k min, tiny official orders might be undercharged?
+            // "Task 1... ensures logic... applies regardless of selected shipping method".
+            // I will strictly follow the NEW instruction. Tiered fee only.
 
             // Shipping Rate (Heavy Table)
             const tier = pricingData.official_shipping.heavy.find(
@@ -98,7 +120,6 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
             ) || pricingData.normal_shipping[pricingData.normal_shipping.length - 1];
 
             if (tier) {
-                service_fee_percent = tier.fee_percent;
                 // Note: Using Actual Weight columns as default
                 shipping_rate_vnd = warehouse === 'HN' ? tier.hn_actual : tier.hcm_actual;
             }
@@ -106,13 +127,14 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
 
         let service_fee_vnd = total_product_vnd * (service_fee_percent / 100);
 
-        // Special override for Official Line small orders (delegate fee min 300k)
+        // NOTE: Commenting out the old 300k override for Official Line to strictly follow "Global Fee Policy".
+        // If the user wants to bring it back, they can verify.
+        /*
         if (method === 'ChinhNgach' && total_product_vnd < 30_000_000 && total_product_vnd > 0) {
             service_fee_vnd = 300_000;
-            // Recalculate percent for display purposes (optional, might look weird if > 100% for tiny orders)
-            // But mathematically correct for the breakdown
             service_fee_percent = (service_fee_vnd / total_product_vnd) * 100;
         }
+        */
 
         const int_shipping_fee_vnd = total_weight_kg * shipping_rate_vnd;
 

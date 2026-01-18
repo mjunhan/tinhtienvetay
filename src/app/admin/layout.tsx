@@ -79,24 +79,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {/* Sidebar */}
             <aside
                 className={`
-          fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300
+          fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 z-50 transform transition-transform duration-300
           lg:translate-x-0
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
             >
                 {/* Logo */}
-                <div className="p-6 border-b border-gray-200">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <div className="p-6 border-b border-slate-800">
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
                         TÍNH TIỀN VỀ TAY
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">Admin Dashboard v0.4.0</p>
+                    <p className="text-sm text-slate-400 mt-1">Admin Dashboard v0.4.2</p>
                 </div>
 
                 {/* User Info */}
                 {userEmail && (
-                    <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                        <p className="text-xs text-gray-500">Đăng nhập với</p>
-                        <p className="text-sm font-medium text-gray-800 truncate">{userEmail}</p>
+                    <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-800">
+                        <p className="text-xs text-slate-400">Đăng nhập với</p>
+                        <p className="text-sm font-medium text-amber-50 truncate">{userEmail}</p>
                     </div>
                 )}
 
@@ -113,8 +113,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                   ${isActive
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                                        : 'text-gray-700 hover:bg-gray-100'
+                                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-900/20'
+                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                                     }
                 `}
                                 onClick={() => setIsSidebarOpen(false)}
@@ -127,17 +127,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </nav>
 
                 {/* Back to Home & Logout */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800 bg-slate-900">
                     <a
                         href="/"
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all mb-1"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-all mb-1"
                     >
                         <ArrowLeft size={20} />
                         <span className="font-medium">Về Trang Chủ</span>
                     </a>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-900/20 transition-all"
                     >
                         <LogOut size={20} />
                         <span className="font-medium">Đăng xuất</span>

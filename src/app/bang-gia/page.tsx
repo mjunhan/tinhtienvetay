@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, AlertTriangle, CheckCircle, Info } from 'lucide-rea
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { fadeIn } from '@/components/ui/motion-primitives';
+import { GlobalServiceFeeTable } from '@/components/pricing/GlobalServiceFeeTable';
 
 export default function BangGiaPage() {
     const { data: pricing, isLoading, error } = usePricingRules();
@@ -60,6 +61,16 @@ export default function BangGiaPage() {
                         <span>TỶ GIÁ HIỆN TẠI:</span>
                         <span className="bg-white text-amber-600 px-3 py-1 rounded-lg">1¥ = {formatMoney(pricing?.exchange_rate || 0)}₫</span>
                     </div>
+                </motion.div>
+
+                {/* GLOBAL SERVICE FEE TABLE - NEW V0.4.2 */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    className="mb-12"
+                >
+                    <GlobalServiceFeeTable />
                 </motion.div>
 
                 {/* SECTION 1: OFFICIAL LINE (CHÍNH NGẠCH) */}

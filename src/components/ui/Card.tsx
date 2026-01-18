@@ -20,7 +20,7 @@ export function Card({ children, className, title, delay = 0, id, style }: CardP
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay, ease: "easeOut" }}
             className={cn(
-                "bg-surface rounded-2xl shadow-sm border border-slate-100 p-6",
+                "bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-amber-200 p-6",
                 className
             )}
         >

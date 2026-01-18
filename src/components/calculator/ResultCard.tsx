@@ -57,7 +57,7 @@ export function ResultCard({ breakdown, method, settings, orderDetails }: Result
     const registerLink = settings?.registration_link || "https://kdhoangkim.com/user/register?sale=3955";
 
     return (
-        <Card title="Chi phí ước tính" className="h-full bg-gradient-to-br from-white to-violet-50/50" id="result-card-container">
+        <Card title="Chi phí ước tính" className="h-full" id="result-card-container">
             <div className="space-y-6">
                 {/* Invoice Capture Target (Hidden from visual flow, but rendered for capture) */}
                 {orderDetails && (

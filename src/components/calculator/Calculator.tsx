@@ -130,7 +130,7 @@ export default function Calculator() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting || isPricingLoading || !pricingData}
-                                className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all transform disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-lg font-bold rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-xl hover:scale-[1.02] transition-all transform disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? (
                                     <>

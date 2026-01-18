@@ -159,7 +159,7 @@ function BlogIndexContent() {
                                 key={post.id}
                                 variants={staggerItem}
                                 {...liftWithGlow}
-                                className="bg-white rounded-xl shadow-md border border-amber-100 overflow-hidden group cursor-pointer"
+                                className="bg-white rounded-xl shadow-md border border-amber-100 overflow-hidden group cursor-pointer hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300"
                             >
                                 <Link href={`/meo-nhap-hang/${post.slug}`}>
                                     {/* Thumbnail */}
