@@ -4,7 +4,7 @@ import { usePublishedPosts } from "@/hooks/useBlog";
 import { useCategories } from "@/hooks/useCMS";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem, liftWithGlow } from "@/components/ui/motion-primitives";
-import { Calendar, ArrowRight, BookOpen, Search } from "lucide-react";
+import { Calendar, ArrowRight, BookOpen, Search, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -77,6 +77,17 @@ function BlogIndexContent() {
     return (
         <div className="min-h-screen bg-amber-50 py-16">
             <div className="container mx-auto px-4 max-w-6xl">
+                {/* Back to Home Navigation */}
+                <div className="mb-6">
+                    <Link
+                        href="/"
+                        className="inline-flex items-center text-amber-600 hover:text-amber-700 font-medium transition-colors gap-2"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Quay lại trang tính tiền
+                    </Link>
+                </div>
+
                 {/* Hero Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

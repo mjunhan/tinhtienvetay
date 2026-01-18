@@ -19,7 +19,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-amber-500">
-                Tính Tiền Vé Tàu
+                Tính Tiền Về Tay
               </h1>
               <p className="text-xs text-slate-500 -mt-0.5">v0.3.0 Golden Era</p>
             </div>

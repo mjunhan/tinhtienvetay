@@ -251,7 +251,7 @@ export default function BangGiaPage() {
                 {/* Footer Note */}
                 <div className="mt-8 text-center text-sm text-slate-600">
                     <p>* Giá trên có thể thay đổi tùy theo thời điểm. Vui lòng liên hệ để được báo giá chính xác.</p>
-                    <p className="mt-2">© 2026 Tính Tiền Vé Tàu - v0.3.0</p>
+                    <p className="mt-2">© 2026 Tính Tiền Về Tay - v0.4.0</p>
                 </div>
             </div>
         </div>
