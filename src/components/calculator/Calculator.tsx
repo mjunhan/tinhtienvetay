@@ -161,7 +161,12 @@ export default function Calculator() {
                 <div className="lg:col-span-5">
                     <div className="sticky top-8">
                         {showResult ? (
-                            <ResultCard breakdown={breakdown} method={formValues.method || 'TMDT'} settings={settings} />
+                            <ResultCard
+                                breakdown={breakdown}
+                                method={formValues.method || 'TMDT'}
+                                settings={settings}
+                                orderDetails={safeOrderDetails} // Pass details for Invoice
+                            />
                         ) : (
                             <div className="h-full min-h-[400px] bg-white/50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-center text-text-muted">
                                 <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">

@@ -56,6 +56,7 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
 
         if (method === 'TMDT') {
             // TMDT Logic
+            // STRICT: Use Actual Weight (total_weight_kg) for TMĐT
             const tier = pricingData.tmdt_shipping.find(
                 t => total_product_vnd >= t.min_value && total_product_vnd <= t.max_value
             ) || pricingData.tmdt_shipping[pricingData.tmdt_shipping.length - 1];
@@ -66,27 +67,18 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
             }
         } else if (method === 'ChinhNgach') {
             // Official Logic (Heavy)
-            // Service fee for Official is typically different, but the image shows "Phí ủy thác: 1%..." 
-            // The user request images didn't specify a service fee table for Official, only shipping.
-            // However, the second image explicitly says "Phí ủy thác: 1% giá trị tổng invoice".
-            // We will use 1% as the service fee for Official method as per the image text.
-            // "Lưu ý: đối với invoice dưới 30tr mặc định thu ủy thác 300k/ 1 mục khai"
+            // Service Fee: 1% of total invoice value
+            // Exception: If invoice < 30tr, min fee is 300k
 
-            // Logic for Service Fee (Delegate Fee)
-            if (total_product_vnd < 30_000_000) {
-                // If 1% is less than 300k, we need to handle this?
-                // Text says "mặc định thu ủy thác 300k". 
-                // But 1% of 30M is 300k. So for anything < 30M, 1% is < 300k.
-                // So if < 30M, fee is fixed 300,000 VND (effectively).
-                // Converting fixed fee to percent for display might be weird, so we might need to adjust logic.
-                // For now, let's just calculate the value.
-                service_fee_percent = 0; // It's a fixed fee
+            if (total_product_vnd < 30_000_000 && total_product_vnd > 0) {
+                // Fixed fee 300k case
+                // We will set percent to 0 here and handle the fixed value below to avoid breakdown confusion
+                service_fee_percent = 0;
             } else {
                 service_fee_percent = 1;
             }
 
             // Shipping Rate (Heavy Table)
-            // Use heavy table as default since we only have weight
             const tier = pricingData.official_shipping.heavy.find(
                 t => {
                     const min = t.min_weight ?? 0;
@@ -107,21 +99,18 @@ export function useCostCalculator(details: OrderDetails, pricingData?: PricingCo
 
             if (tier) {
                 service_fee_percent = tier.fee_percent;
-                // Note: The image distinguishes Actual vs Converted for Normal.
-                // Since we only have `total_weight_kg` (which is sum of product weights), 
-                // we'll assume it's "Actual" for now unless we add volume fields.
-                // If we want to support converted, we'd need volume inputs.
-                // Using "Actual" columns:
+                // Note: Using Actual Weight columns as default
                 shipping_rate_vnd = warehouse === 'HN' ? tier.hn_actual : tier.hcm_actual;
             }
         }
 
         let service_fee_vnd = total_product_vnd * (service_fee_percent / 100);
 
-        // Special override for Official Line small orders (delegate fee)
+        // Special override for Official Line small orders (delegate fee min 300k)
         if (method === 'ChinhNgach' && total_product_vnd < 30_000_000 && total_product_vnd > 0) {
             service_fee_vnd = 300_000;
-            // Recalculate percent for display
+            // Recalculate percent for display purposes (optional, might look weird if > 100% for tiny orders)
+            // But mathematically correct for the breakdown
             service_fee_percent = (service_fee_vnd / total_product_vnd) * 100;
         }
 

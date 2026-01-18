@@ -39,14 +39,37 @@ function AnimatedMoney({ value }: { value: number }) {
 }
 
 import { DownloadInvoice } from './DownloadInvoice';
+import { InvoiceTemplate } from './InvoiceTemplate';
+import { OrderDetails } from '@/types';
 
-export function ResultCard({ breakdown, method, settings }: ResultCardProps) {
+interface ResultCardProps {
+    breakdown: CostBreakdown;
+    method: 'TMDT' | 'TieuNgach' | 'ChinhNgach';
+    settings?: {
+        clean_zalo_link: string;
+        registration_link: string;
+    };
+    orderDetails?: OrderDetails;
+}
+
+export function ResultCard({ breakdown, method, settings, orderDetails }: ResultCardProps) {
     const zaloLink = settings?.clean_zalo_link || "https://zalo.me/0912345678";
     const registerLink = settings?.registration_link || "https://kdhoangkim.com/user/register?sale=3955";
 
     return (
         <Card title="Chi phí ước tính" className="h-full bg-gradient-to-br from-white to-violet-50/50" id="result-card-container">
             <div className="space-y-6">
+                {/* Invoice Capture Target (Hidden from visual flow, but rendered for capture) */}
+                {orderDetails && (
+                    <div className="fixed left-[-9999px] top-0">
+                        <InvoiceTemplate
+                            id="invoice-capture-target"
+                            details={orderDetails}
+                            breakdown={breakdown}
+                        />
+                    </div>
+                )}
+
                 {/* Exchange Rate Badge */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-violet-100 text-primary rounded-full text-xs font-semibold">
                     <span>Tỷ giá: 1 ¥ = {breakdown.exchange_rate} ₫</span>
@@ -78,7 +101,9 @@ export function ResultCard({ breakdown, method, settings }: ResultCardProps) {
                             </div>
                             <div>
                                 <div className="text-sm font-medium text-text-main">Phí dịch vụ</div>
-                                <div className="text-xs text-text-muted">{breakdown.service_fee_percent}%</div>
+                                <div className="text-xs text-text-muted">
+                                    {breakdown.service_fee_percent > 0 ? `${breakdown.service_fee_percent}%` : 'Phí cố định'}
+                                </div>
                             </div>
                         </div>
                         <div className="text-base font-semibold text-text-main">
@@ -95,7 +120,7 @@ export function ResultCard({ breakdown, method, settings }: ResultCardProps) {
                             <div>
                                 <div className="text-sm font-medium text-text-main">Phí vận chuyển</div>
                                 <div className="text-xs text-text-muted">
-                                    {breakdown.total_weight_kg} kg x {formatNumber(breakdown.shipping_rate_vnd)} ₫/kg
+                                    {breakdown.total_weight_kg.toFixed(1)} kg x {formatNumber(breakdown.shipping_rate_vnd)} ₫/kg
                                     {breakdown.internal_ship_vnd > 0 && ` + Nội địa TQ`}
                                 </div>
                             </div>
@@ -165,8 +190,8 @@ export function ResultCard({ breakdown, method, settings }: ResultCardProps) {
                     </a>
 
                     <DownloadInvoice
-                        elementId="result-card-container"
-                        productName="Logistic Estimator"
+                        elementId="invoice-capture-target"
+                        productName={orderDetails?.products[0]?.name || "Logistic_Quote"}
                     />
                 </div>
             </div>

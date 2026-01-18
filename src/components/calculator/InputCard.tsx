@@ -130,13 +130,14 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                                         <div>
                                             <div className="flex items-center mb-1.5">
                                                 <label className="text-sm font-medium text-text-main/80">Giá đàm phán</label>
-                                                <Tooltip content="(Tùy chọn) Nếu khách đã deal được giá hoặc muốn nhờ đàm phán." />
+                                                <span className="ml-1 text-xs text-slate-400 font-normal">(Tùy chọn)</span>
+                                                <Tooltip content="Nếu khách đã deal được giá hoặc muốn nhờ đàm phán." />
                                             </div>
                                             <Input
                                                 type="number"
                                                 step={0.01}
                                                 suffix="¥"
-                                                placeholder="Tùy chọn"
+                                                placeholder="0"
                                                 {...register(`products.${index}.negotiated_price_cny`, { valueAsNumber: true })}
                                                 className="bg-white"
                                             />
@@ -164,17 +165,17 @@ export function InputCard({ control, register, errors }: InputCardProps) {
 
                 {/* 3. Logistics Inputs */}
                 <div>
+                    <div className="flex items-center mb-1.5">
+                        <label className="text-sm font-medium text-text-main">Phí ship nội địa TQ (¥)</label>
+                        <span className="ml-1 text-xs text-slate-400 font-normal">(Tùy chọn)</span>
+                    </div>
                     <Input
-                        label="Phí ship nội địa TQ (¥)"
                         type="number"
-                        placeholder="Để trống nếu chưa rõ"
+                        placeholder="0"
                         suffix="¥"
                         {...register('internal_ship_cny', { valueAsNumber: true })}
                         className="bg-slate-50"
                     />
-                    <p className="text-xs text-orange-400 mt-1.5 ml-1 flex items-center gap-1">
-                        * Nếu chưa rõ, hãy để trống hoặc điền 0, hệ thống sẽ cập nhật sau.
-                    </p>
                 </div>
             </Card>
 
