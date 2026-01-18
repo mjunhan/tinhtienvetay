@@ -61,7 +61,7 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => append({ id: crypto.randomUUID(), quantity: 1, price_cny: 0, weight_kg: 0, internal_ship_cny: 0 })}
+                            onClick={() => append({ id: crypto.randomUUID(), quantity: 1, price_cny: 0, negotiated_price_cny: 0, weight_kg: 0, internal_ship_cny: 0 })}
                             className="text-primary hover:bg-violet-50"
                         >
                             <Plus className="w-4 h-4 mr-1" />
@@ -104,7 +104,7 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                                     </div>
 
                                     {/* Row 2: Metrics */}
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         <Input
                                             label="Số lượng"
                                             type="number"
@@ -125,21 +125,6 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                                                 suffix="¥"
                                                 {...register(`products.${index}.price_cny`, { valueAsNumber: true })}
                                                 error={errors.products?.[index]?.price_cny?.message}
-                                                className="bg-white"
-                                            />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center mb-1.5">
-                                                <label className="text-sm font-medium text-text-main/80">Giá đàm phán</label>
-                                                <span className="ml-1 text-xs text-slate-400 font-normal">(Tùy chọn)</span>
-                                                <Tooltip content="Nếu khách đã deal được giá hoặc muốn nhờ đàm phán." />
-                                            </div>
-                                            <Input
-                                                type="number"
-                                                step={0.01}
-                                                suffix="¥"
-                                                placeholder="0"
-                                                {...register(`products.${index}.negotiated_price_cny`, { valueAsNumber: true })}
                                                 className="bg-white"
                                             />
                                         </div>

@@ -1,14 +1,16 @@
 'use client';
 
-import { usePricingRules } from '@/hooks/usePricingRules';
+import { usePricingRules, useShippingRateRules } from '@/hooks/usePricingRules';
 import { ArrowLeft, Loader2, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { fadeIn } from '@/components/ui/motion-primitives';
 import { GlobalServiceFeeTable } from '@/components/pricing/GlobalServiceFeeTable';
+import { OfficialShippingTable } from '@/components/pricing/OfficialShippingTable';
 
 export default function BangGiaPage() {
     const { data: pricing, isLoading, error } = usePricingRules();
+    const { data: shippingRates } = useShippingRateRules();
 
     const formatMoney = (value: number) => {
         return new Intl.NumberFormat('vi-VN').format(value);
@@ -73,117 +75,23 @@ export default function BangGiaPage() {
                     <GlobalServiceFeeTable />
                 </motion.div>
 
-                {/* SECTION 1: OFFICIAL LINE (CHÍNH NGẠCH) */}
+                {/* SECTION 1: OFFICIAL LINE (CHÍNH NGẠCH) - NEW DESIGN */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     className="mb-16"
                 >
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="h-10 w-2 bg-amber-500 rounded-full" />
-                        <h2 className="text-3xl font-bold text-slate-900">Line Chính Ngạch</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Heavy Goods */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
-                                <h3 className="text-xl font-bold text-slate-800">Hàng Nặng (KG)</h3>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-slate-900 text-white">
-                                        <tr>
-                                            <th className="py-3 px-4 text-left">Trọng lượng</th>
-                                            <th className="py-3 px-4 text-left">Hà Nội</th>
-                                            <th className="py-3 px-4 text-left">TP.HCM</th>
-                                        </tr>
-                                    </thead>
-                                    <motion.tbody
-                                        className="divide-y divide-slate-100"
-                                        variants={{
-                                            hidden: { opacity: 0 },
-                                            show: { opacity: 1, transition: { staggerChildren: 0.05 } }
-                                        }}
-                                        initial="hidden"
-                                        whileInView="show"
-                                        viewport={{ once: true }}
-                                    >
-                                        {pricing?.official_shipping.heavy.map((tier, idx) => (
-                                            <motion.tr
-                                                key={idx}
-                                                className="hover:bg-amber-50/50 transition-colors"
-                                                variants={{
-                                                    hidden: { opacity: 0, x: -10 },
-                                                    show: { opacity: 1, x: 0 }
-                                                }}
-                                            >
-                                                <td className="py-3 px-4 font-medium text-slate-700">
-                                                    {tier.max_weight ? `${formatMoney(tier.min_weight || 0)} - ${formatMoney(tier.max_weight)} kg` : `Trên ${formatMoney(tier.min_weight || 0)} kg`}
-                                                </td>
-                                                <td className="py-3 px-4 font-bold text-slate-900">{formatMoney(tier.price_hn)}₫</td>
-                                                <td className="py-3 px-4 font-bold text-slate-900">{formatMoney(tier.price_hcm)}₫</td>
-                                            </motion.tr>
-                                        ))}
-                                    </motion.tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Bulky Goods */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="bg-slate-100 px-6 py-4 border-b border-slate-200">
-                                <h3 className="text-xl font-bold text-slate-800">Hàng Cồng Kềnh (M³)</h3>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-slate-900 text-white">
-                                        <tr>
-                                            <th className="py-3 px-4 text-left">Thể tích</th>
-                                            <th className="py-3 px-4 text-left">Hà Nội</th>
-                                            <th className="py-3 px-4 text-left">TP.HCM</th>
-                                        </tr>
-                                    </thead>
-                                    <motion.tbody
-                                        className="divide-y divide-slate-100"
-                                        variants={{
-                                            hidden: { opacity: 0 },
-                                            show: { opacity: 1, transition: { staggerChildren: 0.05 } }
-                                        }}
-                                        initial="hidden"
-                                        whileInView="show"
-                                        viewport={{ once: true }}
-                                    >
-                                        {pricing?.official_shipping.bulky.map((tier, idx) => (
-                                            <motion.tr
-                                                key={idx}
-                                                className="hover:bg-amber-50/50 transition-colors"
-                                                variants={{
-                                                    hidden: { opacity: 0, x: -10 },
-                                                    show: { opacity: 1, x: 0 }
-                                                }}
-                                            >
-                                                <td className="py-3 px-4 font-medium text-slate-700">
-                                                    {tier.max_volume ? `${tier.min_volume} - ${tier.max_volume} m³` : `Trên ${tier.min_volume} m³`}
-                                                </td>
-                                                <td className="py-3 px-4 font-bold text-slate-900">{formatMoney(tier.price_hn)}₫</td>
-                                                <td className="py-3 px-4 font-bold text-slate-900">{formatMoney(tier.price_hcm)}₫</td>
-                                            </motion.tr>
-                                        ))}
-                                    </motion.tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                    <OfficialShippingTable
+                        rules={shippingRates || []}
+                        exchangeRate={pricing?.exchange_rate || 0}
+                    />
 
                     {/* Formula Footer */}
                     <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-slate-700 flex items-start gap-3">
                         <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                         <div>
-                            <p className="font-bold text-amber-900 mb-1">CÔNG THỨC TÍNH TỔNG CHI PHÍ:</p>
-                            <p>Tiền hàng + Phí mua hàng + Ship nội địa TQ + <span className="font-bold text-red-600">Phí ủy thác (1%)</span> + Thuế (VAT + NK) + Cước vận chuyển</p>
-                            <p className="mt-1 text-xs text-slate-500 italic">* Lưu ý: Đối với invoice dưới 30tr, phí ủy thác mặc định là 300k/đơn.</p>
+                            <strong className="text-amber-900">Công thức tính:</strong> Tổng chi phí = Tiền hàng (¥) + Ship nội địa (¥) + Phương thức vận chuyển (VNĐ) + Phí dịch vụ (%)
                         </div>
                     </div>
                 </motion.div>
@@ -353,7 +261,7 @@ export default function BangGiaPage() {
                     viewport={{ once: true }}
                     className="mb-12"
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="max-w-3xl mx-auto">
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                                 <CheckCircle className="w-5 h-5 text-green-500" />
@@ -374,17 +282,6 @@ export default function BangGiaPage() {
                                 </li>
                             </ul>
                         </div>
-
-                        <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500 rounded-full blur-[60px] opacity-20" />
-                            <h3 className="text-lg font-bold mb-4">Thông tin liên hệ</h3>
-                            <div className="space-y-4 text-sm text-slate-300">
-                                <p><strong className="text-white">Hotline/Zalo:</strong> 0912.345.678</p>
-                                <p><strong className="text-white">Kho HN:</strong> 123 Nguyễn Trãi, Thanh Xuân, Hà Nội</p>
-                                <p><strong className="text-white">Kho HCM:</strong> 456 CMT8, Quận 3, TP.HCM</p>
-                                <p><strong className="text-white">Email:</strong> support@tinhtienvetay.vn</p>
-                            </div>
-                        </div>
                     </div>
                 </motion.div>
 
@@ -393,6 +290,6 @@ export default function BangGiaPage() {
                     <p>© 2026 Tính Tiền Về Tay. Bảng giá có hiệu lực từ 12/07/2025.</p>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

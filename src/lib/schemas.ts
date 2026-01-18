@@ -7,8 +7,8 @@ export const productSchema = z.object({
     quantity: z.number().min(1, 'Số lượng tối thiểu là 1'),
     price_cny: z.number().min(0, 'Giá tệ không được âm'),
     negotiated_price_cny: z.preprocess(
-        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
-        z.number().min(0).optional()
+        (val) => (val === '' || val === null || val === undefined) ? 0 : Number(val),
+        z.number().min(0).optional().default(0)
     ),
     internal_ship_cny: z.preprocess(
         (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
