@@ -3,8 +3,8 @@
 ## 📋 Tổng Quan Dự Án
 
 **Tên dự án:** `tinhtienvetay`  
-**Phiên bản:** 0.3.0 "Golden Era & Blog CMS"  
-**Mô tả:** Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với đầy đủ các yếu tố như giá sản phẩm, tỷ giá, phí dịch vụ, phí vận chuyển quốc tế và nội địa. **v0.3.0 giới thiệu "Giao diện Vàng Kim" sang trọng, hệ thống Blog CMS đầy đủ, trang Liên hệ cao cấp, và Framer Motion animations hoàn chỉnh.**
+**Phiên bản:** 0.4.0 "Content Powerhouse"  
+**Mô tả:** Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với đầy đủ các yếu tố như giá sản phẩm, tỷ giá, phí dịch vụ, phí vận chuyển quốc tế và nội địa. **v0.4.0 nâng cấp Blog CMS với Rich Text Editor (TipTap), hệ thống danh mục & thẻ, tìm kiếm & lọc, và bình luận có kiểm duyệt.**
 
 ---
 
@@ -20,11 +20,13 @@
 | **TanStack Query** | ^5.62.11 | 🆕 **Data Fetching & Caching** |
 | **Zod** | ^4.3.5 | Form Validation Schema |
 | **React Hook Form** | ^7.71.1 | Form State Management |
+| **TipTap** | ^2.x | **Rich Text Editor** ✨ v0.4.0 |
 | **Framer Motion** | ^12.26.2 | Animations |
 | **Zustand** | ^5.0.10 | State Management |
 | **Sonner** | ^2.0.7 | Toast Notifications |
 | **html-to-image** | ^1.11.13 | Export kết quả thành ảnh |
 | **Lucide React** | ^0.562.0 | Icon Library |
+| **date-fns** | ^4.x | Date Formatting |
 
 ---
 
@@ -38,9 +40,17 @@ d:\tinhtienvetay\
 │   │   │   ├── login/          # 🆕 Trang đăng nhập admin
 │   │   │   ├── settings/       # ✨ Cài đặt tỷ giá & hotline (editable v0.2.1)
 │   │   │   ├── pricing/        # ✨ Quản lý bảng giá (editable v0.2.1)
+│   │   │   ├── posts/          # 📝 Quản lý bài viết (v0.3.0)
+│   │   │   ├── categories/     # 🏷️ Quản lý danh mục (v0.4.0)
+│   │   │   ├── comments/       # 💬 Kiểm duyệt bình luận (v0.4.0)
 │   │   │   ├── layout.tsx      # 🆕 Layout admin với sidebar
 │   │   │   └── page.tsx        # 🆕 Dashboard admin
+│   │   ├── meo-nhap-hang/      # 📝 Blog công khai (v0.3.0)
+│   │   │   ├── [slug]/         # Blog detail page
+│   │   │   └── page.tsx        # Blog index
 │   │   ├── bang-gia/           # 🆕 Trang bảng giá công khai
+│   │   │   └── page.tsx
+│   │   ├── lien-he/            # 📞 Trang liên hệ (v0.3.0)
 │   │   │   └── page.tsx
 │   │   ├── api/                # API Routes
 │   │   │   ├── admin/          # Admin API endpoints
@@ -50,10 +60,16 @@ d:\tinhtienvetay\
 │   │   └── page.tsx            # Trang chủ (Calculator)
 │   │
 │   ├── components/
-│   │   ├── admin/              # ✨ Admin Components (v0.2.1)
-│   │   │   └── pricing/
-│   │   │       ├── EditServiceFeeDialog.tsx    # Edit service fees
-│   │   │       └── EditShippingRateDialog.tsx  # Edit shipping rates
+│   │   ├── admin/              # ✨ Admin Components
+│   │   │   ├── editor/         # 📝 Rich Text Editor (v0.4.0)
+│   │   │   │   └── RichTextEditor.tsx  # TipTap editor
+│   │   │   ├── pricing/
+│   │   │   │   ├── EditServiceFeeDialog.tsx
+│   │   │   │   └── EditShippingRateDialog.tsx
+│   │   │   └── PostForm.tsx    # Blog post form
+│   │   ├── blog/               # 📝 Blog Components (v0.4.0)
+│   │   │   ├── CommentForm.tsx     # Comment submission
+│   │   │   └── CommentList.tsx     # Comment display
 │   │   ├── calculator/         # Calculator Components
 │   │   │   ├── Calculator.tsx      # Component chính (React Query)
 │   │   │   ├── InputCard.tsx       # Form nhập liệu
@@ -69,12 +85,19 @@ d:\tinhtienvetay\
 │   │
 │   ├── hooks/
 │   │   ├── useCostCalculator.ts    # Logic tính toán
-│   │   ├── usePricingRules.ts      # 🆕 React Query hooks cho pricing
-│   │   └── useAdminMutations.ts    # ✨ Mutations cho admin (v0.2.1)
+│   │   ├── usePricingRules.ts      # React Query hooks cho pricing
+│   │   ├── useBlog.ts              # Blog CRUD hooks (v0.3.0)
+│   │   ├── useCMS.ts               # Categories & Tags hooks (v0.4.0)
+│   │   ├── useComments.ts          # Comment hooks (v0.4.0)
+│   │   └── useAdminMutations.ts    # Admin mutations
 │   │
 │   ├── lib/
-│   │   ├── supabase.ts             # 🆕 Supabase client config
-│   │   ├── providers.tsx           # 🆕 React Query provider
+│   │   ├── supabase/               # Supabase clients
+│   │   │   ├── client.ts           # Client-side
+│   │   │   └── server.ts           # Server-side
+│   │   ├── blog-actions.ts         # Blog server actions (v0.3.0+)
+│   │   ├── comment-actions.ts      # Comment server actions (v0.4.0)
+│   │   ├── providers.tsx           # React Query provider
 │   │   ├── schemas.ts              # Zod validation schemas
 │   │   └── utils.ts                # Utility functions
 │   │
@@ -82,8 +105,9 @@ d:\tinhtienvetay\
 │   │   └── admin.ts                # ✨ Admin form schemas (v0.2.1)
 │   │
 │   ├── types/
-│   │   ├── index.ts                # Core types
-│   │   └── database.types.ts       # 🆕 Supabase table types
+│   │   ├── index.ts                # Core calculator types
+│   │   ├── database.types.ts       # Supabase table types
+│   │   └── blog.ts                 # Blog types (v0.3.0)
 │   │
 │   └── middleware.ts               # 🆕 Route protection
 │
@@ -92,8 +116,10 @@ d:\tinhtienvetay\
 │
 ├── supabase/
 │   └── migrations/
-│       ├── 001_initial_schema.sql    # Initial schema (if separated)
-│       └── 002_update_rls_policies.sql # ✨ v0.2.1 RLS updates
+│       ├── 001_initial_schema.sql          # Initial pricing tables
+│       ├── 002_update_rls_policies.sql     # v0.2.1 RLS updates
+│       ├── 003_create_blog_tables.sql      # v0.3.0 blog tables
+│       └── 004_create_cms_tables.sql       # v0.4.0 categories, tags, comments
 │
 ├── supabase-schema.sql         # 🆕 Database schema
 ├── supabase-seed.sql           # 🆕 Initial data
@@ -211,7 +237,7 @@ Phí vận chuyển quốc tế (linh hoạt cho nhiều loại)
 | `created_at` | timestamp | Auto-generated |
 | `updated_at` | timestamp | Auto-updated |
 
-#### 4. `posts` (v0.3.0)
+#### 4. `posts` (v0.3.0, Updated v0.4.0)
 Blog posts for "Mẹo nhập hàng" section
 
 | Column | Type | Description |
@@ -220,8 +246,9 @@ Blog posts for "Mẹo nhập hàng" section
 | `title` | text | Post title |
 | `slug` | text | URL-friendly slug (unique) |
 | `excerpt` | text | Short summary (nullable) |
-| `content` | text | Full content HTML/Markdown (nullable) |
+| `content` | text | Full content HTML (nullable) |
 | `thumbnail_url` | text | Featured image URL (nullable) |
+| `category_id` | uuid | Foreign key to categories (v0.4.0) |
 | `is_published` | boolean | Publish status (default: false) |
 | `created_at` | timestamp | Auto-generated |
 | `updated_at` | timestamp | Auto-updated via trigger |
@@ -230,6 +257,55 @@ Blog posts for "Mẹo nhập hàng" section
 - Public SELECT on `is_published = true`
 - Authenticated users (admin) can perform all operations
 - Auto-update trigger on `updated_at` column
+
+#### 5. `categories` (v0.4.0)
+Blog categories
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `name` | text | Category name |
+| `slug` | text | URL-friendly slug (unique) |
+| `description` | text | Category description (nullable) |
+| `created_at` | timestamp | Auto-generated |
+
+#### 6. `tags` (v0.4.0)
+Blog tags
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `name` | text | Tag name |
+| `slug` | text | URL-friendly slug (unique) |
+| `created_at` | timestamp | Auto-generated |
+
+#### 7. `post_tags` (v0.4.0)
+Many-to-many junction table for posts and tags
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `post_id` | uuid | Foreign key to posts |
+| `tag_id` | uuid | Foreign key to tags |
+
+**Primary Key**: Composite `(post_id, tag_id)`
+
+#### 8. `comments` (v0.4.0)
+User comments on blog posts
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `post_id` | uuid | Foreign key to posts |
+| `user_name` | text | Commenter's name |
+| `user_email` | text | Commenter's email |
+| `content` | text | Comment content |
+| `is_approved` | boolean | Approval status (default: false) |
+| `created_at` | timestamp | Auto-generated |
+
+**RLS Policies**:
+- Public INSERT (anyone can submit)
+- Public SELECT on `is_approved = true`
+- Authenticated users (admin) can UPDATE and DELETE
 
 ---
 
@@ -420,6 +496,38 @@ Render responsive tables
   - `Label.tsx` - Form label with required indicator
   - `EditServiceFeeDialog.tsx` - Service fee editor
   - `EditShippingRateDialog.tsx` - Shipping rate editor with dynamic units
+
+### 🚀 v0.4.0 - Content Powerhouse (Current)
+- ✅ **Rich Text Editor (TipTap)**:
+  - Complete toolbar: Bold, Italic, Headings, Lists, Blockquotes, Images
+  - Image insertion via URL input
+  - Undo/Redo functionality
+  - Tailwind Typography (`prose-amber`) styling
+  - Server-side rendering safe
+- ✅ **Categories & Tags System**:
+  - Category management at `/admin/categories`
+  - Create, edit, delete categories with slug auto-generation
+  - Tag support with comma-separated input
+  - Auto-create tags on post save
+  - Many-to-many relationship (post_tags junction table)
+- ✅ **Search & Filter**:
+  - Real-time search on blog index page
+  - Category filtering with URL params
+  - Tag filtering capability (backend ready)
+  - Shareable filtered URLs (`?q=...&cat=...`)
+- ✅ **Comments System**:
+  - Public comment submission form with validation
+  - Admin moderation page at `/admin/comments`
+  - Filter by status: All / Pending / Approved
+  - One-click approve/delete actions
+  - Display approved comments on blog detail pages
+  - RLS policies for security
+- ✅ **Enhanced Blog UX**:
+  - Tag display on blog detail pages
+  - Category selection in post editor
+  - Tag input in post editor (comma-separated)
+  - Improved form validation
+  - Toast notifications for all actions
 
 ### ⭐ v0.3.0 - Golden Era & Blog CMS
 - ✅ **Golden Luxury Design System**:
@@ -637,10 +745,12 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive test checklist.
 - [x] ~~Blog CMS system~~ ✅ **Completed in v0.3.0**
 - [x] ~~Premium contact page~~ ✅ **Completed in v0.3.0**
 - [x] ~~Golden luxury design system~~ ✅ **Completed in v0.3.0**
-- [ ] Rich text editor for blog content (TipTap or Lexical)
-- [ ] Blog categories and tags
-- [ ] Blog search functionality
-- [ ] Blog comments system
+- [x] ~~Rich text editor for blog content~~ ✅ **Completed in v0.4.0 (TipTap)**
+- [x] ~~Blog categories and tags~~ ✅ **Completed in v0.4.0**
+- [x] ~~Blog search functionality~~ ✅ **Completed in v0.4.0**
+- [x] ~~Blog comments system~~ ✅ **Completed in v0.4.0**
+- [ ] Enhanced tag UI (multi-select, auto-complete)
+- [ ] Admin Tags management page
 - [ ] Add/delete pricing rules via admin UI (CREATE/DELETE operations)
 - [ ] Bulk import/export for pricing data via CSV
 - [ ] Real-time sync with Supabase subscriptions
@@ -657,5 +767,5 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive test checklist.
 ---
 
 **Last Updated:** 2026-01-18  
-**Version:** 0.3.0 "Golden Era & Blog CMS"  
-**Author:** Developed with Claude 3.5 Sonnet
+**Version:** 0.4.0 "Content Powerhouse"  
+**Author:** Developed with Claude 3.5 Sonnet Thinking

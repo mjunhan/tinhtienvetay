@@ -1,6 +1,6 @@
-# 🚀 Tính Tiền Về Tay v0.2.1
+# 🚀 Tính Tiền Về Tay v0.4.0
 
-> **Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với hệ thống quản trị động và khả năng chỉnh sửa trực tiếp**
+> **Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với hệ thống quản trị động, Blog CMS đầy đủ và tính năng bình luận**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1.2-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-blue)](https://react.dev/)
@@ -15,20 +15,29 @@
 ### Dành cho Khách hàng
 - 🧮 **Calculator Thông Minh**: Tính toán chi phí chi tiết cho 3 phương thức vận chuyển (TMDT, Tiểu Ngạch, Chính Ngạch)
 - 📋 **Bảng Giá Công Khai**: Xem giá dịch vụ và vận chuyển tại `/bang-gia`
+- 📝 **Blog CMS**: Đọc mẹo nhập hàng tại `/meo-nhap-hang` với tìm kiếm và lọc theo danh mục
+- 💬 **Bình luận**: Để lại bình luận trên bài viết (có kiểm duyệt)
 - 📱 **Responsive**: Tối ưu cho mobile, tablet, desktop
 - 📷 **Export Báo Giá**: Tải kết quả dưới dạng hình ảnh
 
-### 🆕 Dành cho Admin (v0.2.0)
+### 🆕 Dành cho Admin (v0.4.0)
 - 🔐 **Đăng nhập bảo mật**: Supabase Auth với email/password
 - ⚙️ **Cài đặt động**: Thay đổi tỷ giá, hotline, Zalo link real-time
-- 💰 **Quản lý giá**: Xem tất cả phí dịch vụ và phí vận chuyển
+- 💰 **Quản lý giá**: Chỉnh sửa phí dịch vụ và phí vận chuyển
 - 📊 **Dashboard**: Tổng quan và truy cập nhanh
+- 📚 **Blog Management**:
+  - ✏️ Rich Text Editor (TipTap) với formatting, lists, images
+  - 🏷️ Category & Tag management
+  - 📝 Draft/Publish workflow
+- 💬 **Comment Moderation**: Duyệt/xóa bình luận từ người dùng
 
-### ✨ v0.2.1 - Admin Editing
-- ✏️ **Chỉnh sửa trực tiếp**: Edit pricing trong UI (không cần vào Supabase)
-- 🎯 **Modal Dialog**: Form validation với Zod, loading states
-- 🔄 **Auto-refresh**: Data cập nhật tức thì sau khi edit
-- 🛡️ **Secure**: RLS policies bảo vệ quyền chỉnh sửa
+### ✨ v0.4.0 - Content Powerhouse
+- 📝 **Rich Text Editor**: TipTap editor với toolbar đầy đủ (Bold, Italic, Lists, Images, etc.)
+- 🏷️ **Categories & Tags**: Quản lý danh mục và thẻ cho bài viết
+- 🔍 **Search & Filter**: Tìm kiếm và lọc bài viết theo danh mục
+- 💬 **Comments System**: Hệ thống bình luận với kiểm duyệt admin
+- 🎨 **Golden Theme**: Giao diện vàng kim sang trọng
+- ⚡ **Enhanced UX**: Framer Motion animations toàn bộ app
 
 ---
 
@@ -55,9 +64,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ### 3. Setup Database
 ```sql
--- Chạy trong Supabase SQL Editor:
--- 1. supabase-schema.sql (tạo tables)
--- 2. supabase-seed.sql (populate data)
+-- Chạy trong Supabase SQL Editor (theo thứ tự):
+-- 1. supabase/migrations/001_initial_schema.sql (tạo tables cơ bản)
+-- 2. supabase/migrations/002_update_rls_policies.sql (RLS policies)
+-- 3. supabase/migrations/003_create_blog_tables.sql (blog tables)
+-- 4. supabase/migrations/004_create_cms_tables.sql (CMS: categories, tags, comments)
+-- 5. supabase-seed.sql (populate data)
 ```
 
 ### 4. Create Admin User
@@ -80,10 +92,18 @@ Open [http://localhost:3000](http://localhost:3000)
 |-------|-------------|---------------|
 | `/` | Calculator (trang chủ) | ❌ No |
 | `/bang-gia` | Bảng giá dịch vụ công khai | ❌ No |
+| `/meo-nhap-hang` | Blog index với search & filter | ❌ No |
+| `/meo-nhap-hang/[slug]` | Blog detail với comments | ❌ No |
+| `/lien-he` | Trang liên hệ | ❌ No |
 | `/admin` | Dashboard admin | ✅ Yes |
 | `/admin/login` | Đăng nhập admin | ❌ No |
 | `/admin/settings` | Chỉnh sửa tỷ giá & hotline | ✅ Yes |
-| `/admin/pricing` | Chỉnh sửa bảng giá (v0.2.1) | ✅ Yes |
+| `/admin/pricing` | Chỉnh sửa bảng giá | ✅ Yes |
+| `/admin/posts` | Quản lý bài viết | ✅ Yes |
+| `/admin/posts/new` | Tạo bài viết mới | ✅ Yes |
+| `/admin/posts/[id]/edit` | Chỉnh sửa bài viết | ✅ Yes |
+| `/admin/categories` | Quản lý danh mục | ✅ Yes |
+| `/admin/comments` | Kiểm duyệt bình luận | ✅ Yes |
 
 ---
 
@@ -95,8 +115,10 @@ Open [http://localhost:3000](http://localhost:3000)
 - **Auth**: Supabase Auth
 - **Data Fetching**: TanStack Query (React Query)
 - **Forms**: React Hook Form + Zod
+- **Rich Text**: TipTap (Starter Kit + Image Extension)
 - **Icons**: Lucide React
 - **Animations**: Framer Motion
+- **Notifications**: Sonner
 
 ---
 
@@ -114,16 +136,37 @@ Open [http://localhost:3000](http://localhost:3000)
 src/
 ├── app/                    # Next.js App Router
 │   ├── admin/              # Admin system
+│   │   ├── posts/          # Blog management
+│   │   ├── categories/     # Category management
+│   │   ├── comments/       # Comment moderation
+│   │   ├── settings/       # Global settings
+│   │   └── pricing/        # Pricing management
+│   ├── meo-nhap-hang/      # Public blog
 │   ├── bang-gia/           # Public pricing page
+│   ├── lien-he/            # Contact page
 │   └── api/                # API routes
 ├── components/             # React components
+│   ├── admin/              # Admin components
+│   │   └── editor/         # TipTap RichTextEditor
+│   ├── blog/               # Blog components
+│   │   ├── CommentForm.tsx
+│   │   └── CommentList.tsx
+│   ├── calculator/         # Calculator components
+│   └── ui/                 # UI primitives
 ├── hooks/                  # Custom hooks
 │   ├── useCostCalculator.ts
-│   └── usePricingRules.ts  # React Query hooks
+│   ├── usePricingRules.ts
+│   ├── useBlog.ts          # Blog queries
+│   ├── useCMS.ts           # Categories & Tags
+│   └── useComments.ts      # Comment system
 ├── lib/                    # Utilities
-│   ├── supabase.ts         # Supabase client
-│   └── providers.tsx       # React Query provider
+│   ├── supabase/           # Supabase clients
+│   ├── blog-actions.ts     # Blog server actions
+│   ├── comment-actions.ts  # Comment server actions
+│   └── utils.ts            # Helpers
 └── types/                  # TypeScript types
+    ├── database.types.ts   # Database types
+    └── blog.ts             # Blog types
 ```
 
 ---
@@ -134,11 +177,13 @@ src/
 
 **Credentials**: Tạo trong Supabase Auth Dashboard
 
-**Default capabilities (v0.2.1):**
+**Admin capabilities (v0.4.0):**
 - View dashboard
-- **Edit exchange rate, hotline, Zalo link**
-- **Edit service fees (TMDT, Tiểu Ngạch, Chính Ngạch)**
-- **Edit shipping rates (all methods and warehouses)**
+- Edit exchange rate, hotline, Zalo link
+- Edit service fees and shipping rates
+- **Create/Edit/Delete blog posts with Rich Text Editor**
+- **Manage categories and tags**
+- **Moderate comments (approve/delete)**
 - Real-time UI updates after edits
 
 ---
@@ -153,6 +198,7 @@ npm start
 # Access pages:
 # - http://localhost:3000 (Calculator)
 # - http://localhost:3000/bang-gia (Pricing)
+# - http://localhost:3000/meo-nhap-hang (Blog)
 # - http://localhost:3000/admin (Admin)
 ```
 
@@ -166,26 +212,43 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for full checklist.
 1. **`global_settings`** - Exchange rate, hotline, Zalo link
 2. **`service_fee_rules`** - Service fees by method, order value, deposit %
 3. **`shipping_rate_rules`** - Shipping rates (value/weight/volume based)
+4. **`posts`** - Blog posts with rich content
+5. **`categories`** - Blog categories (v0.4.0)
+6. **`tags`** - Blog tags (v0.4.0)
+7. **`post_tags`** - Many-to-many junction table (v0.4.0)
+8. **`comments`** - User comments with moderation (v0.4.0)
 
-Full schema: [supabase-schema.sql](./supabase-schema.sql)
+Full schema: [supabase/migrations](./supabase/migrations/)
 
 ---
 
 ## 🔄 Version History
 
-### v0.2.1 (2026-01-17) - Current
+### v0.4.0 (2026-01-18) - Content Powerhouse
+- ✅ Rich Text Editor (TipTap) integrated into Blog CMS
+- ✅ Categories & Tags management system
+- ✅ Blog search and category filtering
+- ✅ Comments system with admin moderation
+- ✅ Enhanced public blog UI with tags display
+- ✅ Database migrations for CMS tables
+
+### v0.3.0 (2026-01-18) - Golden Era & Blog CMS
+- ✅ Golden luxury design system (Amber theme)
+- ✅ Full Blog CMS with create/edit/delete
+- ✅ Premium contact page
+- ✅ Framer Motion animations
+- ✅ Auto-slug generation for Vietnamese
+
+### v0.2.1 (2026-01-17)
 - ✅ Admin can edit all pricing directly in UI
 - ✅ Modal dialog forms with validation
-- ✅ Loading states and toast notifications
 - ✅ Automatic data refresh after mutations
-- ✅ Secure RLS policies for authenticated users
 
 ### v0.2.0 (2026-01-17)
 - ✅ Supabase integration for dynamic pricing
 - ✅ Admin authentication system
 - ✅ Public pricing page (`/bang-gia`)
 - ✅ React Query for data fetching
-- ✅ Real-time updates
 
 ### v0.1.0 (Initial Release)
 - Calculator with 3 shipping methods
@@ -213,6 +276,7 @@ MIT License - See [LICENSE](LICENSE) for details.
 - Powered by [Supabase](https://supabase.com/)
 - UI by [Tailwind CSS](https://tailwindcss.com/)
 - Icons from [Lucide](https://lucide.dev/)
+- Rich Text by [TipTap](https://tiptap.dev/)
 
 ---
 
