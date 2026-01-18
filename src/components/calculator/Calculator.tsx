@@ -36,7 +36,6 @@ export default function Calculator() {
                     quantity: 1,
                     price_cny: 0,
                     weight_kg: 0,
-                    negotiated_price_cny: undefined,
                     name: '',
                     link: ''
                 }
@@ -65,7 +64,7 @@ export default function Calculator() {
         warehouse: (formValues.warehouse || 'HN') as 'HN' | 'HCM',
         method: (formValues.method || 'TMDT') as 'TMDT' | 'TieuNgach' | 'ChinhNgach',
         deposit: (formValues.deposit || 70) as 70 | 80,
-        products: (formValues.products || []) as { id: string; quantity: number; price_cny: number; negotiated_price_cny?: number; weight_kg?: number; internal_ship_cny?: number; name?: string; link?: string }[],
+        products: (formValues.products || []) as { id: string; quantity: number; price_cny: number; weight_kg?: number; internal_ship_cny?: number; dimensions?: { length: number; width: number; height: number }; name?: string; link?: string }[],
         customerName: formValues.customerName || '',
         customerPhone: formValues.customerPhone || ''
     };

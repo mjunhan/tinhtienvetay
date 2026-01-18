@@ -112,17 +112,39 @@ export function ResultCard({ breakdown, method, settings, orderDetails }: Result
                     </div>
 
                     {/* Item 3: Shipping */}
-                    <div className="flex justify-between items-center p-3 rounded-xl hover:bg-white/60 transition-colors">
-                        <div className="flex items-center gap-3">
+                    <div className="flex justify-between items-start p-3 rounded-xl hover:bg-white/60 transition-colors">
+                        <div className="flex items-start gap-3 flex-1">
                             <div className="p-2 bg-orange-100 text-orange-500 rounded-lg">
                                 <Truck className="w-5 h-5" />
                             </div>
-                            <div>
-                                <div className="text-sm font-medium text-text-main">Phí vận chuyển</div>
-                                <div className="text-xs text-text-muted">
-                                    {breakdown.total_weight_kg.toFixed(1)} kg x {formatNumber(breakdown.shipping_rate_vnd)} ₫/kg
-                                    {breakdown.internal_ship_vnd > 0 && ` + Nội địa TQ`}
-                                </div>
+                            <div className="flex-1">
+                                <div className="text-sm font-medium text-text-main mb-1">Phí vận chuyển</div>
+
+                                {/* TieuNgach: Show Real vs Dimensional Weight Breakdown */}
+                                {method === 'TieuNgach' && breakdown.dimensional_weight !== undefined && breakdown.dimensional_weight > 0 ? (
+                                    <div className="text-xs text-text-muted space-y-0.5">
+                                        <div>Cân thực: {breakdown.total_weight_kg.toFixed(1)} kg × {formatNumber(breakdown.shipping_rate_vnd)} ₫ = {formatVND(breakdown.real_weight_cost || 0)}</div>
+                                        <div>Cân quy đổi: {breakdown.dimensional_weight.toFixed(1)} kg × {formatNumber(breakdown.shipping_rate_vnd)} ₫ = {formatVND(breakdown.dimensional_weight_cost || 0)}</div>
+                                        <div className="font-semibold text-primary pt-1">
+                                            → Tính theo: {(breakdown.real_weight_cost || 0) > (breakdown.dimensional_weight_cost || 0) ? 'Cân thực' : 'Cân quy đổi'}
+                                        </div>
+                                    </div>
+                                ) : method === 'ChinhNgach' && breakdown.volume_m3 !== undefined && breakdown.volume_m3 > 0 ? (
+                                    /* ChinhNgach: Show Heavy vs Bulky Breakdown */
+                                    <div className="text-xs text-text-muted space-y-0.5">
+                                        <div>Hàng nặng: {breakdown.total_weight_kg.toFixed(1)} kg × {formatNumber(breakdown.shipping_rate_vnd)} ₫ = {formatVND(breakdown.heavy_cost || 0)}</div>
+                                        <div>Hàng cồng kềnh: {breakdown.volume_m3.toFixed(3)} m³ × {formatNumber(breakdown.volume_rate_vnd || 0)} ₫ = {formatVND(breakdown.bulky_cost || 0)}</div>
+                                        <div className="font-semibold text-primary pt-1">
+                                            → Tính theo: {(breakdown.heavy_cost || 0) > (breakdown.bulky_cost || 0) ? 'Hàng nặng' : 'Hàng cồng kềnh'}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Default: Standard Display */
+                                    <div className="text-xs text-text-muted">
+                                        {breakdown.total_weight_kg.toFixed(1)} kg × {formatNumber(breakdown.shipping_rate_vnd)} ₫/kg
+                                        {breakdown.internal_ship_vnd > 0 && ` + Nội địa TQ`}
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="text-base font-semibold text-text-main">

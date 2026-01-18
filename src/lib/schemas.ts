@@ -6,10 +6,6 @@ export const productSchema = z.object({
     link: z.string().optional(),
     quantity: z.number().min(1, 'Số lượng tối thiểu là 1'),
     price_cny: z.number().min(0, 'Giá tệ không được âm'),
-    negotiated_price_cny: z.preprocess(
-        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
-        z.number().min(0).optional()
-    ),
     internal_ship_cny: z.preprocess(
         (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
         z.number().min(0).optional()
@@ -18,6 +14,20 @@ export const productSchema = z.object({
         (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
         z.number().min(0).optional()
     ),
+    dimensions: z.object({
+        length: z.preprocess(
+            (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+            z.number().min(0.1, 'Chiều dài phải > 0').optional()
+        ),
+        width: z.preprocess(
+            (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+            z.number().min(0.1, 'Chiều rộng phải > 0').optional()
+        ),
+        height: z.preprocess(
+            (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
+            z.number().min(0.1, 'Chiều cao phải > 0').optional()
+        ),
+    }).optional(),
 });
 
 export const calculatorSchema = z.object({

@@ -6,9 +6,13 @@ export interface Product {
   id: string;
   quantity: number;
   price_cny: number;
-  negotiated_price_cny?: number;
   internal_ship_cny?: number;
   weight_kg?: number;
+  dimensions?: {
+    length: number; // cm
+    width: number;  // cm
+    height: number; // cm
+  };
   name?: string;
   image_url?: string;
   link?: string;
@@ -42,6 +46,17 @@ export interface CostBreakdown {
   remaining_amount: number;
 
   avg_price_per_unit_vnd: number;
+
+  // For TieuNgach dimensional weight breakdown
+  dimensional_weight?: number;
+  real_weight_cost?: number;
+  dimensional_weight_cost?: number;
+
+  // For ChinhNgach volume-based breakdown
+  volume_m3?: number;
+  volume_rate_vnd?: number;
+  heavy_cost?: number;
+  bulky_cost?: number;
 }
 
 export interface NormalShippingTier {

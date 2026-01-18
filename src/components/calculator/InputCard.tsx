@@ -1,5 +1,5 @@
-import { Control, useFieldArray, UseFormRegister, FieldErrors } from 'react-hook-form';
-import { Plus, Trash2, Package } from 'lucide-react';
+import { Control, useFieldArray, UseFormRegister, FieldErrors, useFormContext } from 'react-hook-form';
+import { Plus, Trash2, Package, Ruler } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
@@ -19,6 +19,10 @@ export function InputCard({ control, register, errors }: InputCardProps) {
         control,
         name: "products"
     });
+
+    const { watch } = useFormContext<CalculatorFormValues>();
+    const method = watch('method');
+    const showDimensions = method === 'TieuNgach' || method === 'ChinhNgach';
 
     return (
         <div className="space-y-6">
@@ -103,7 +107,7 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                                     </div>
 
                                     {/* Row 2: Metrics */}
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         <Input
                                             label="Số lượng"
                                             type="number"
@@ -127,21 +131,6 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                                                 className="bg-white"
                                             />
                                         </div>
-                                        <div>
-                                            <div className="flex items-center mb-1.5">
-                                                <label className="text-sm font-medium text-text-main/80">Giá đàm phán</label>
-                                                <span className="ml-1 text-xs text-slate-400 font-normal">(Tùy chọn)</span>
-                                                <Tooltip content="Nếu khách đã deal được giá hoặc muốn nhờ đàm phán." />
-                                            </div>
-                                            <Input
-                                                type="number"
-                                                step={0.01}
-                                                suffix="¥"
-                                                placeholder="0"
-                                                {...register(`products.${index}.negotiated_price_cny`, { valueAsNumber: true })}
-                                                className="bg-white"
-                                            />
-                                        </div>
                                         <Input
                                             label="Cân nặng (Kg)"
                                             type="number"
@@ -151,9 +140,13 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                                             error={errors.products?.[index]?.weight_kg?.message}
                                             className="bg-white"
                                         />
+                                    </div>
+
+                                    {/* Row 3: Shipping & Dimensions */}
+                                    <div className="grid grid-cols-1 gap-3">
                                         <div>
                                             <div className="flex items-center mb-1.5">
-                                                <label className="text-sm font-medium text-text-main/80">Ship nội địa</label>
+                                                <label className="text-sm font-medium text-text-main/80">Ship nội địa TQ</label>
                                                 <span className="ml-1 text-xs text-slate-400 font-normal">(Tùy chọn)</span>
                                             </div>
                                             <Input
@@ -165,6 +158,57 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                                                 className="bg-white"
                                             />
                                         </div>
+
+                                        {/* Conditional Dimensions */}
+                                        <AnimatePresence>
+                                            {showDimensions && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                                                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    className="pt-3 border-t border-slate-200"
+                                                >
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <Ruler className="w-4 h-4 text-violet-600" />
+                                                        <label className="text-sm font-medium text-text-main/80">
+                                                            Kích thước kiện hàng (D × R × C) - cm
+                                                        </label>
+                                                        <span className="text-xs text-slate-400 font-normal">(Không bắt buộc)</span>
+                                                        <Tooltip content="Dùng để tính cân quy đổi / thể tích. Bỏ trống nếu không có thông tin." />
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                        <Input
+                                                            placeholder="Dài"
+                                                            type="number"
+                                                            step={0.1}
+                                                            suffix="cm"
+                                                            {...register(`products.${index}.dimensions.length`, { valueAsNumber: true })}
+                                                            error={errors.products?.[index]?.dimensions?.length?.message}
+                                                            className="bg-white"
+                                                        />
+                                                        <Input
+                                                            placeholder="Rộng"
+                                                            type="number"
+                                                            step={0.1}
+                                                            suffix="cm"
+                                                            {...register(`products.${index}.dimensions.width`, { valueAsNumber: true })}
+                                                            error={errors.products?.[index]?.dimensions?.width?.message}
+                                                            className="bg-white"
+                                                        />
+                                                        <Input
+                                                            placeholder="Cao"
+                                                            type="number"
+                                                            step={0.1}
+                                                            suffix="cm"
+                                                            {...register(`products.${index}.dimensions.height`, { valueAsNumber: true })}
+                                                            error={errors.products?.[index]?.dimensions?.height?.message}
+                                                            className="bg-white"
+                                                        />
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 </motion.div>
                             ))}
