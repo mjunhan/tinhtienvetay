@@ -101,3 +101,45 @@ export function useUpdateShippingRate() {
         },
     });
 }
+
+/**
+ * Hook to create a new shipping rate rule
+ * Invalidates shipping-rates and pricing queries on success
+ */
+export function useCreateShippingRate() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: Omit<ShippingRateRule, 'id' | 'created_at' | 'updated_at'>) => {
+            console.log('[useCreateShippingRate] Creating shipping rate:', data);
+
+            const { data: result, error } = await supabase
+                .from('shipping_rate_rules')
+                .insert(data)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('[useCreateShippingRate] Supabase error:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint,
+                });
+                throw error;
+            }
+
+            console.log('[useCreateShippingRate] Create successful:', result);
+            return result;
+        },
+        onSuccess: () => {
+            console.log('[useCreateShippingRate] Invalidating queries...');
+            queryClient.invalidateQueries({ queryKey: ['shipping-rates'] });
+            queryClient.invalidateQueries({ queryKey: ['pricing'] });
+        },
+        onError: (error: any) => {
+            console.error('[useCreateShippingRate] Mutation failed:', error);
+        },
+    });
+}
+

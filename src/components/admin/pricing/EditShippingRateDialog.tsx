@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { Label } from '@/components/ui/Label';
 import { Input } from '@/components/ui/Input';
-import { useUpdateShippingRate } from '@/hooks/useAdminMutations';
+import { useUpdateShippingRate, useCreateShippingRate } from '@/hooks/useAdminMutations';
 import { shippingRateSchema, type ShippingRateFormData } from '@/schemas/admin';
 import type { ShippingRateRule } from '@/types/database.types';
 import { SHIPPING_METHOD_LABELS } from '@/types';
@@ -25,6 +25,8 @@ export function EditShippingRateDialog({
     shippingRate,
 }: EditShippingRateDialogProps) {
     const updateShippingRate = useUpdateShippingRate();
+    const createShippingRate = useCreateShippingRate();
+    const isCreateMode = !shippingRate.id;
 
     const {
         control,
@@ -55,18 +57,33 @@ export function EditShippingRateDialog({
     const onSubmit = async (data: ShippingRateFormData) => {
         try {
             console.log('[EditShippingRateDialog] 🚀 FORM SUBMIT PAYLOAD:', data);
-            console.log('[EditShippingRateDialog] Submitting:', data);
+            console.log('[EditShippingRateDialog] Mode:', isCreateMode ? 'CREATE' : 'EDIT');
 
-            await updateShippingRate.mutateAsync({
-                id: shippingRate.id,
-                data: {
+            if (isCreateMode) {
+                // Create new record
+                await createShippingRate.mutateAsync({
+                    method: shippingRate.method,
+                    type: shippingRate.type,
+                    warehouse: shippingRate.warehouse,
+                    subtype: shippingRate.subtype || null,
                     min_value: data.min_value,
                     max_value: data.max_value,
                     price: data.price,
-                },
-            });
+                });
+                toast.success('Đã tạo mốc giá mới thành công!');
+            } else {
+                // Update existing record
+                await updateShippingRate.mutateAsync({
+                    id: shippingRate.id,
+                    data: {
+                        min_value: data.min_value,
+                        max_value: data.max_value,
+                        price: data.price,
+                    },
+                });
+                toast.success('Đã cập nhật phí vận chuyển thành công!');
+            }
 
-            toast.success('Đã cập nhật phí vận chuyển thành công!');
             onClose();
         } catch (error: any) {
             console.error('[EditShippingRateDialog] Submit error:', {
@@ -83,7 +100,7 @@ export function EditShippingRateDialog({
             } else if (error?.code === '23505') {
                 toast.error('Lỗi: Giá trị trùng lặp trong hệ thống.');
             } else {
-                toast.error(`Lỗi khi cập nhật: ${error?.message || 'Vui lòng thử lại.'}`);
+                toast.error(`Lỗi khi ${isCreateMode ? 'tạo' : 'cập nhật'}: ${error?.message || 'Vui lòng thử lại.'}`);
             }
         }
     };
@@ -113,8 +130,10 @@ export function EditShippingRateDialog({
         return shippingRate.type;
     };
 
+    const isPending = updateShippingRate.isPending || createShippingRate.isPending;
+
     return (
-        <Dialog open={open} onClose={onClose} title="Chỉnh sửa phí vận chuyển">
+        <Dialog open={open} onClose={onClose} title={isCreateMode ? 'Thiết lập mốc giá mới' : 'Chỉnh sửa phí vận chuyển'}>
             {/* @ts-ignore - z.coerce type inference causes handleSubmit type mismatch */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* Method & Type Display */}
@@ -233,18 +252,18 @@ export function EditShippingRateDialog({
                 <div className="flex gap-3 pt-4">
                     <button
                         type="submit"
-                        disabled={updateShippingRate.isPending}
+                        disabled={isPending}
                         className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {updateShippingRate.isPending && (
+                        {isPending && (
                             <Loader2 size={18} className="animate-spin" />
                         )}
-                        {updateShippingRate.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+                        {isPending ? 'Đang lưu...' : (isCreateMode ? 'Tạo mốc giá' : 'Lưu thay đổi')}
                     </button>
                     <button
                         type="button"
                         onClick={onClose}
-                        disabled={updateShippingRate.isPending}
+                        disabled={isPending}
                         className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
                     >
                         Hủy

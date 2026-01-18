@@ -4,23 +4,45 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useServiceFeeRules, useShippingRateRules } from '@/hooks/usePricingRules';
+import { useMutation } from '@tanstack/react-query';
 import { toast, Toaster } from 'sonner';
 import { DollarSign, Truck, Info, Pencil } from 'lucide-react';
 import { EditServiceFeeDialog } from '@/components/admin/pricing/EditServiceFeeDialog';
 import { EditShippingRateDialog } from '@/components/admin/pricing/EditShippingRateDialog';
+import { AdminOfficialTable } from '@/components/admin/pricing/AdminOfficialTable';
 import type { ServiceFeeRule, ShippingRateRule } from '@/types/database.types';
 
 export default function AdminPricingPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'service' | 'shipping'>('service');
+    const [shippingSubTab, setShippingSubTab] = useState<'official' | 'other'>('official');
 
     // Dialog states
     const [editingServiceFee, setEditingServiceFee] = useState<ServiceFeeRule | null>(null);
     const [editingShippingRate, setEditingShippingRate] = useState<ShippingRateRule | null>(null);
+    const [createTemplate, setCreateTemplate] = useState<Partial<ShippingRateRule> | null>(null);
 
     const { data: serviceFees, isLoading: isLoadingFees, refetch: refetchFees } = useServiceFeeRules();
     const { data: shippingRates, isLoading: isLoadingRates, refetch: refetchRates } = useShippingRateRules();
+
+    // Delete mutation
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const { error } = await supabase
+                .from('shipping_rate_rules')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            toast.success('Đã xóa thành công');
+            refetchRates();
+        },
+        onError: () => {
+            toast.error('Lỗi khi xóa');
+        }
+    });
 
     // Verify auth
     useEffect(() => {
@@ -73,8 +95,8 @@ export default function AdminPricingPage() {
                                     <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
                                     <td className="px-6 py-4 text-sm">
                                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
-                                                ? 'bg-orange-100 text-orange-800'
-                                                : 'bg-green-100 text-green-800'
+                                            ? 'bg-orange-100 text-orange-800'
+                                            : 'bg-green-100 text-green-800'
                                             }`}>
                                             {fee.deposit_percent}%
                                         </span>
@@ -214,8 +236,8 @@ export default function AdminPricingPage() {
                 <button
                     onClick={() => setActiveTab('service')}
                     className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'service'
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                            : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                 >
                     <DollarSign size={20} />
@@ -224,8 +246,8 @@ export default function AdminPricingPage() {
                 <button
                     onClick={() => setActiveTab('shipping')}
                     className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${activeTab === 'shipping'
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                            : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                 >
                     <Truck size={20} />
@@ -262,10 +284,48 @@ export default function AdminPricingPage() {
                         </div>
                     </div>
 
-                    {renderShippingRateTable('TMDT', 'TMDT - Theo giá trị đơn hàng', 'value_based', null, 'bg-gradient-to-r from-blue-600 to-purple-600')}
-                    {renderShippingRateTable('TieuNgach', 'Tiểu Ngạch - Theo giá trị đơn hàng', 'value_based', null, 'bg-gradient-to-r from-green-600 to-teal-600')}
-                    {renderShippingRateTable('ChinhNgach', 'Chính Ngạch - Hàng cồng kềnh (theo kg)', 'weight_based', 'heavy', 'bg-gradient-to-r from-purple-600 to-pink-600')}
-                    {renderShippingRateTable('ChinhNgach', 'Chính Ngạch - Hàng thể tích (theo m³)', 'volume_based', 'bulky', 'bg-gradient-to-r from-pink-600 to-red-600')}
+                    {/* Sub-tabs for shipping */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex gap-2">
+                        <button
+                            onClick={() => setShippingSubTab('official')}
+                            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${shippingSubTab === 'official'
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                                : 'text-gray-700 hover:bg-gray-100'
+                                }`}
+                        >
+                            Line Chính Ngạch
+                        </button>
+                        <button
+                            onClick={() => setShippingSubTab('other')}
+                            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${shippingSubTab === 'other'
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                                : 'text-gray-700 hover:bg-gray-100'
+                                }`}
+                        >
+                            TMDT & Tiểu Ngạch
+                        </button>
+                    </div>
+
+                    {/* Official Line (Chính Ngạch) - New Modern UI */}
+                    {shippingSubTab === 'official' && (
+                        <AdminOfficialTable
+                            rules={shippingRates || []}
+                            onEdit={(rule) => setEditingShippingRate(rule)}
+                            onDelete={(id) => deleteMutation.mutate(id)}
+                            onCreate={(template) => {
+                                setCreateTemplate(template);
+                                setEditingShippingRate({ ...template, price: 0, id: '' } as ShippingRateRule);
+                            }}
+                        />
+                    )}
+
+                    {/* Other shipping methods (TMDT, Tiểu Ngạch) */}
+                    {shippingSubTab === 'other' && (
+                        <>
+                            {renderShippingRateTable('TMDT', 'TMDT - Theo giá trị đơn hàng', 'value_based', null, 'bg-gradient-to-r from-blue-600 to-purple-600')}
+                            {renderShippingRateTable('TieuNgach', 'Tiểu Ngạch - Theo giá trị đơn hàng', 'value_based', null, 'bg-gradient-to-r from-green-600 to-teal-600')}
+                        </>
+                    )}
                 </div>
             )}
 
