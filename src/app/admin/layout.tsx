@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ReactNode, useEffect, useState } from 'react';
-import { Home, Settings, DollarSign, LogOut, Menu, X } from 'lucide-react';
+import { Home, Settings, DollarSign, LogOut, Menu, X, ArrowLeft, FileText, List, MessageSquare } from 'lucide-react';
 
 interface AdminLayoutProps {
     children: ReactNode;
@@ -46,8 +46,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const navItems = [
         { href: '/admin', label: 'Tổng quan', icon: Home },
-        { href: '/admin/settings', label: 'Cài đặt chung', icon: Settings },
+        { href: '/admin/posts', label: 'Bài viết', icon: FileText },
+        { href: '/admin/categories', label: 'Danh mục', icon: List },
+        { href: '/admin/comments', label: 'Bình luận', icon: MessageSquare },
         { href: '/admin/pricing', label: 'Quản lý giá', icon: DollarSign },
+        { href: '/admin/settings', label: 'Cài đặt chung', icon: Settings },
     ];
 
     return (
@@ -86,7 +89,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         TÍNH TIỀN VỀ TAY
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">Admin Dashboard v0.2.0</p>
+                    <p className="text-sm text-gray-500 mt-1">Admin Dashboard v0.4.0</p>
                 </div>
 
                 {/* User Info */}
@@ -123,8 +126,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     })}
                 </nav>
 
-                {/* Logout Button */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+                {/* Back to Home & Logout */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+                    <a
+                        href="/"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all mb-1"
+                    >
+                        <ArrowLeft size={20} />
+                        <span className="font-medium">Về Trang Chủ</span>
+                    </a>
                     <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all"

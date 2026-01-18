@@ -11,6 +11,9 @@ export interface Post {
     content: string | null;
     thumbnail_url: string | null;
     is_published: boolean;
+    category_id?: string | null;
+    category?: { id: string; name: string; slug: string };
+    tags?: { id: string; name: string; slug: string }[];
     created_at: string;
     updated_at: string;
 }
@@ -22,6 +25,8 @@ export interface CreatePostInput {
     content?: string;
     thumbnail_url?: string;
     is_published?: boolean;
+    category_id?: string;
+    tags?: string[];
 }
 
 export interface UpdatePostInput {
@@ -32,6 +37,8 @@ export interface UpdatePostInput {
     content?: string;
     thumbnail_url?: string;
     is_published?: boolean;
+    category_id?: string;
+    tags?: string[];
 }
 
 export type PostFormData = Omit<CreatePostInput, 'slug'> & {

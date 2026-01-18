@@ -13,7 +13,9 @@ export default function EditPostPage() {
     const updatePost = useUpdatePost();
 
     const handleSubmit = async (data: PostFormValues) => {
-        await updatePost.mutateAsync({ id: postId, ...data });
+        const { tags, ...rest } = data;
+        const tagsArray = tags ? tags.split(",").map(t => t.trim()).filter(Boolean) : [];
+        await updatePost.mutateAsync({ id: postId, ...rest, tags: tagsArray });
         router.push("/admin/posts");
     };
 

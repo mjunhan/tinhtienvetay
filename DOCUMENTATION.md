@@ -3,8 +3,8 @@
 ## 📋 Tổng Quan Dự Án
 
 **Tên dự án:** `tinhtienvetay`  
-**Phiên bản:** 0.2.1  
-**Mô tả:** Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với đầy đủ các yếu tố như giá sản phẩm, tỷ giá, phí dịch vụ, phí vận chuyển quốc tế và nội địa. **v0.2.0 bổ sung hệ thống admin với Supabase và trang bảng giá công khai. v0.2.1 thêm khả năng chỉnh sửa trực tiếp trong Admin UI.**
+**Phiên bản:** 0.3.0 "Golden Era & Blog CMS"  
+**Mô tả:** Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với đầy đủ các yếu tố như giá sản phẩm, tỷ giá, phí dịch vụ, phí vận chuyển quốc tế và nội địa. **v0.3.0 giới thiệu "Giao diện Vàng Kim" sang trọng, hệ thống Blog CMS đầy đủ, trang Liên hệ cao cấp, và Framer Motion animations hoàn chỉnh.**
 
 ---
 
@@ -211,6 +211,26 @@ Phí vận chuyển quốc tế (linh hoạt cho nhiều loại)
 | `created_at` | timestamp | Auto-generated |
 | `updated_at` | timestamp | Auto-updated |
 
+#### 4. `posts` (v0.3.0)
+Blog posts for "Mẹo nhập hàng" section
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `title` | text | Post title |
+| `slug` | text | URL-friendly slug (unique) |
+| `excerpt` | text | Short summary (nullable) |
+| `content` | text | Full content HTML/Markdown (nullable) |
+| `thumbnail_url` | text | Featured image URL (nullable) |
+| `is_published` | boolean | Publish status (default: false) |
+| `created_at` | timestamp | Auto-generated |
+| `updated_at` | timestamp | Auto-updated via trigger |
+
+**RLS Policies**:
+- Public SELECT on `is_published = true`
+- Authenticated users (admin) can perform all operations
+- Auto-update trigger on `updated_at` column
+
 ---
 
 ## 🔑 Core Types & Interfaces
@@ -401,6 +421,65 @@ Render responsive tables
   - `EditServiceFeeDialog.tsx` - Service fee editor
   - `EditShippingRateDialog.tsx` - Shipping rate editor with dynamic units
 
+### ⭐ v0.3.0 - Golden Era & Blog CMS
+- ✅ **Golden Luxury Design System**:
+  - Complete visual overhaul from Purple/Violet to Golden/Amber theme
+  - Color Palette: Amber-500 (#F59E0B) primary, Amber-50 (#FFFBEB) background
+  - Glassmorphism effects (`glass` utility class)
+  - Golden glow shadows for premium elements
+  - Gradient buttons: `bg-gradient-to-r from-amber-500 to-amber-600`
+  - Updated all pages: Home, Contact, Pricing, Blog, Admin
+- ✅ **Full-Featured Blog CMS ("Mẹo nhập hàng")**:
+  - **Database**: New `posts` table with RLS policies
+  - **Admin Interface** (`/admin/posts`):
+    - List view with thumbnails, status badges, edit/delete actions
+    - Create new post at `/admin/posts/new`
+    - Edit existing at `/admin/posts/[id]/edit`
+    - Auto-slug generation from Vietnamese titles
+    - Rich text content support
+    - Image URL input with live preview
+    - Publish/Draft toggle
+    - Form validation with Zod
+  - **Public Pages**:
+    - Blog index at `/meo-nhap-hang` (grid of cards)
+    - Blog detail at `/meo-nhap-hang/[slug]`
+    - Styled with `@tailwindcss/typography` prose classes
+    - Golden theme accents
+    - Reading time estimation
+    - Back navigation
+- ✅ **Premium Contact Page** (`/lien-he`):
+  - Two-column responsive layout (40% info / 60% form)
+  - Contact cards: Hotline (click-to-call), Zalo, Email, Office address
+  - Validated contact form (name, phone, message)
+  - Golden gradient submit button
+  - Google Maps embed at bottom
+  - Hover animations on cards
+- ✅ **Framer Motion Animations**:
+  - Page transitions via `template.tsx` (fadeInUp on route changes)
+  - Reusable motion primitives: `fadeIn`, `staggerContainer`, `liftWithGlow`, `scaleOnHover`
+  - Blog grid stagger animations
+  - Admin table row stagger
+  - Contact card animations
+  - Navbar glassmorphism
+  - Mobile footer slide-up entrance
+- ✅ **UI Component Updates**:
+  - Home page navbar: Golden gradient logo, version badge, improved links
+  - Sticky footer: Golden "Gọi Ngay" button with tap animations
+  - Pricing page: Golden banner, CTA section, animations
+  - Calculator: Golden submit button
+- ✅ **Technical Enhancements**:
+  - Tailwind CSS v4 setup (`@import "tailwindcss"`)
+  - Server-side Supabase client for SSR (`@supabase/ssr`)
+  - Blog server actions in `lib/blog-actions.ts`
+  - Blog React Query hooks in `hooks/useBlog.ts`
+  - Vietnamese date formatting with `date-fns`
+  - Slug generation utility for Vietnamese characters
+  - Type-safe blog types in `types/blog.ts`
+- ✅ **New Database Tables**:
+  - `posts` table with auto-updated `updated_at` trigger
+  - RLS policies: Public read (published only), Admin full access
+  - Indexes on `slug` and `is_published` for performance
+
 ---
 
 ## 🔐 Authentication & Authorization
@@ -555,6 +634,13 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive test checklist.
 ## 🎯 Future Enhancements
 
 - [x] ~~Inline editing for pricing tables in admin~~ ✅ **Completed in v0.2.1**
+- [x] ~~Blog CMS system~~ ✅ **Completed in v0.3.0**
+- [x] ~~Premium contact page~~ ✅ **Completed in v0.3.0**
+- [x] ~~Golden luxury design system~~ ✅ **Completed in v0.3.0**
+- [ ] Rich text editor for blog content (TipTap or Lexical)
+- [ ] Blog categories and tags
+- [ ] Blog search functionality
+- [ ] Blog comments system
 - [ ] Add/delete pricing rules via admin UI (CREATE/DELETE operations)
 - [ ] Bulk import/export for pricing data via CSV
 - [ ] Real-time sync with Supabase subscriptions
@@ -565,9 +651,11 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive test checklist.
 - [ ] Advanced table filters (search, sort, pagination)
 - [ ] Multi-language support (EN/VI)
 - [ ] Mobile app version
+- [ ] SEO optimization for blog pages
+- [ ] Social media sharing for blog posts
 
 ---
 
-**Last Updated:** 2026-01-17  
-**Version:** 0.2.1  
-**Author:** Developed with Claude 3.5 Sonnet Thinking
+**Last Updated:** 2026-01-18  
+**Version:** 0.3.0 "Golden Era & Blog CMS"  
+**Author:** Developed with Claude 3.5 Sonnet

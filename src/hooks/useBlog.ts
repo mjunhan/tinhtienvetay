@@ -27,10 +27,10 @@ export function useAllPosts() {
 /**
  * Fetch published posts only (public)
  */
-export function usePublishedPosts() {
+export function usePublishedPosts(filters: { query?: string; categoryId?: string; tagId?: string } = {}) {
     return useQuery({
-        queryKey: ["posts", "published"],
-        queryFn: getPublishedPosts,
+        queryKey: ["posts", "published", filters],
+        queryFn: () => getPublishedPosts(filters),
     });
 }
 

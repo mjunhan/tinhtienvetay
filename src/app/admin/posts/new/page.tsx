@@ -9,7 +9,9 @@ export default function NewPostPage() {
     const createPost = useCreatePost();
 
     const handleSubmit = async (data: PostFormValues) => {
-        await createPost.mutateAsync(data);
+        const { tags, ...rest } = data;
+        const tagsArray = tags ? tags.split(",").map(t => t.trim()).filter(Boolean) : [];
+        await createPost.mutateAsync({ ...rest, tags: tagsArray });
         router.push("/admin/posts");
     };
 

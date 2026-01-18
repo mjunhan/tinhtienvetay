@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Tính Tiền Vé Tàu - v0.3.0",
+  title: "Tính Tiền Về Tay",
   description: "Công cụ tính chi phí vận chuyển Trung-Việt | Mẹo nhập hàng & Hỗ trợ 24/7",
 };
 

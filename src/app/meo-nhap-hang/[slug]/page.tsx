@@ -8,6 +8,8 @@ import { Calendar, ArrowLeft, Clock } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import CommentList from "@/components/blog/CommentList";
+import CommentForm from "@/components/blog/CommentForm";
 
 export default function BlogDetailPage() {
     const params = useParams();
@@ -132,6 +134,19 @@ export default function BlogDetailPage() {
                             dangerouslySetInnerHTML={{ __html: post.content }}
                         />
                     )}
+
+                    {/* Tags */}
+                    {post.tags && post.tags.length > 0 && (
+                        <div className="mt-8 pt-6 border-t border-slate-200">
+                            <div className="flex flex-wrap gap-2">
+                                {post.tags.map(tag => (
+                                    <span key={tag.id} className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium hover:bg-amber-100 hover:text-amber-700 transition-colors cursor-default">
+                                        #{tag.name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer CTA */}
@@ -155,6 +170,12 @@ export default function BlogDetailPage() {
                         </motion.button>
                     </Link>
                 </motion.div>
+
+                {/* Comments Section */}
+                <div className="mt-12 space-y-8">
+                    <CommentList postId={post.id} />
+                    <CommentForm postId={post.id} />
+                </div>
             </motion.article>
         </div>
     );
