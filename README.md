@@ -1,6 +1,6 @@
-# 🚀 Tính Tiền Về Tay v0.4.0
+# 🚀 Tính Tiền Về Tay v0.4.2
 
-> **Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với hệ thống quản trị động, Blog CMS đầy đủ và tính năng bình luận**
+> **Ứng dụng tính toán chi phí nhập hàng từ Trung Quốc về Việt Nam với hệ thống quản trị động, Blog CMS đầy đủ và UI/UX tối ưu**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1.2-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-blue)](https://react.dev/)
@@ -31,13 +31,21 @@
   - 📝 Draft/Publish workflow
 - 💬 **Comment Moderation**: Duyệt/xóa bình luận từ người dùng
 
+### ✨ v0.4.2 - UI/UX Excellence (Latest)
+- 🎨 **Pixel-Perfect Official Line Table**: Navy blue + gold design
+- 👌 **Floating CTA**: Sticky "Tính Giá Ngay" button
+- 📊 **Enhanced Exchange Rate**: Pulsing glow + animations
+- 🎯 **Better Headers**: Icon badges + subtitles
+- 🧤 **Zebra Striping**: Alternating table rows
+- 🧹 **Calculator Cleanup**: Simplified 3-column layout
+
 ### ✨ v0.4.0 - Content Powerhouse
-- 📝 **Rich Text Editor**: TipTap editor với toolbar đầy đủ (Bold, Italic, Lists, Images, etc.)
-- 🏷️ **Categories & Tags**: Quản lý danh mục và thẻ cho bài viết
-- 🔍 **Search & Filter**: Tìm kiếm và lọc bài viết theo danh mục
-- 💬 **Comments System**: Hệ thống bình luận với kiểm duyệt admin
-- 🎨 **Golden Theme**: Giao diện vàng kim sang trọng
-- ⚡ **Enhanced UX**: Framer Motion animations toàn bộ app
+- 📝 **Rich Text Editor**: TipTap với formatting đầy đủ
+- 🏷️ **Categories & Tags**: Quản lý danh mục
+- 🔍 **Search & Filter**: Tìm kiếm bài viết
+- 💬 **Comments**: Bình luận có kiểm duyệt
+- 🎨 **Golden Theme**: Giao diện vàng sang trọng
+- ⚡ **Animations**: Framer Motion toàn app
 
 ---
 
@@ -225,7 +233,16 @@ Full schema: [supabase/migrations](./supabase/migrations/)
 
 ## 🔄 Version History
 
-### v0.4.0 (Current - 2026-01-18) - Content Powerhouse ⭐
+### v0.4.2 (Current - 2026-01-18) - UI/UX Excellence ⭐
+- ✅ Floating CTA button with fade-in animation
+- ✅ Enhanced exchange rate display (pulsing glow)
+- ✅ Improved section headers with icons
+- ✅ Zebra striping on all pricing tables
+- ✅ Official Line table redesign (navy + gold)
+- ✅ Calculator cleanup (removed negotiated price)
+- ✅ Better spacing and visual hierarchy
+
+### v0.4.0 (2026-01-18) - Content Powerhouse
 - ✅ Rich Text Editor (TipTap) integrated into Blog CMS
 - ✅ Categories & Tags management system
 - ✅ Blog search and category filtering
