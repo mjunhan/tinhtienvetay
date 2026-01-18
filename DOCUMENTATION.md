@@ -721,7 +721,8 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive test checklist.
 ## 📚 Additional Documentation
 
 - [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) - Detailed Supabase setup guide
-- [TESTING_GUIDE.md](./TESTING_GUIDE.md) - Testing checklist for v0.2.0
+- [SETUP_V0.4.0.md](./SETUP_V0.4.0.md) - 🆕 v0.4.0 CMS Features Setup (Rich Text, Categories, Tags, Comments)
+- [TESTING_GUIDE.md](./TESTING_GUIDE.md) - Testing checklist for all versions
 - [walkthrough.md](file:///C:/Users/ADMIN/.gemini/antigravity/brain/faaf8693-78a8-4c1a-b0b8-ecd2f47cdab0/walkthrough.md) - Implementation walkthrough (in artifacts)
 
 ---
@@ -767,5 +768,5 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive test checklist.
 ---
 
 **Last Updated:** 2026-01-18  
-**Version:** 0.4.0 "Content Powerhouse"  
+**Version:** 0.4.0 "Content Powerhouse" (Current)  
 **Author:** Developed with Claude 3.5 Sonnet Thinking

@@ -126,6 +126,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 - **[DOCUMENTATION.md](./DOCUMENTATION.md)** - Tài liệu kỹ thuật đầy đủ
 - **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - Hướng dẫn setup Supabase
+- **[SETUP_V0.4.0.md](./SETUP_V0.4.0.md)** - 🆕 Hướng dẫn CMS features (Rich Text, Categories, Tags, Comments)
 - **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Checklist kiểm thử
 
 ---
@@ -224,7 +225,7 @@ Full schema: [supabase/migrations](./supabase/migrations/)
 
 ## 🔄 Version History
 
-### v0.4.0 (2026-01-18) - Content Powerhouse
+### v0.4.0 (Current - 2026-01-18) - Content Powerhouse ⭐
 - ✅ Rich Text Editor (TipTap) integrated into Blog CMS
 - ✅ Categories & Tags management system
 - ✅ Blog search and category filtering

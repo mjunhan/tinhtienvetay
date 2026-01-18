@@ -1,4 +1,4 @@
-# Supabase Setup Guide - tinhtienvetay v0.2.0
+# Supabase Setup Guide - tinhtienvetay v0.4.0
 
 This guide will help you set up Supabase for the dynamic pricing system.
 
@@ -39,12 +39,42 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 ### 4. Create Database Schema
 
+#### Option A: Run All Migrations (Recommended for Fresh Setup)
+
 1. In Supabase dashboard, click "SQL Editor" in sidebar
 2. Click "New query"
-3. Open the file `supabase-schema.sql` from your project
-4. Copy ALL the contents and paste into the SQL Editor
-5. Click "Run" (or press Ctrl+Enter)
-6. You should see "Success. No rows returned" - this is normal!
+3. Run migrations in order:
+
+   **4a. Base Schema (Pricing Tables)**
+   - Open: `supabase-schema.sql`
+   - Copy all contents and paste
+   - Click "Run"
+   
+   **4b. RLS Policies Update (v0.2.1)**
+   - Open: `supabase/migrations/002_update_rls_policies.sql`
+   - Copy all contents and paste
+   - Click "Run"
+   
+   **4c. Blog Posts Table (v0.3.0)**
+   - Open: `supabase/migrations/003_create_posts_table.sql`
+   - Copy all contents and paste
+   - Click "Run"
+   
+   **4d. CMS Tables (v0.4.0) - Categories, Tags, Comments**
+   - Open: `supabase/migrations/004_create_cms_tables.sql`
+   - Copy all contents and paste
+   - Click "Run"
+
+4. You should see "Success" for each migration
+
+#### Option B: Single Schema File (Legacy)
+
+1. In Supabase dashboard, click "SQL Editor"
+2. Click "New query"
+3. Open `supabase-schema.sql`
+4. Copy ALL contents and paste
+5. Click "Run"
+6. Success message appears
 
 ### 5. Seed Initial Data
 
@@ -57,15 +87,25 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 ### 6. Verify Tables Created
 
 1. Click "Table Editor" in the sidebar
-2. You should see 3 tables:
+2. You should see 8 tables:
    - `global_settings`
    - `service_fee_rules`
    - `shipping_rate_rules`
+   - `posts` (v0.3.0)
+   - `categories` (v0.4.0)
+   - `tags` (v0.4.0)
+   - `post_tags` (v0.4.0)
+   - `comments` (v0.4.0)
 
 3. Click on each table to verify data was inserted:
    - `global_settings`: Should have 3 rows (exchange_rate, hotline, zalo_link)
    - `service_fee_rules`: Should have ~18 rows
    - `shipping_rate_rules`: Should have ~30+ rows
+   - `posts`: Initially empty (create via admin)
+   - `categories`: Initially empty (create via admin)
+   - `tags`: Initially empty (auto-created when adding tags to posts)
+   - `post_tags`: Initially empty (junction table)
+   - `comments`: Initially empty (submitted by users)
 
 ### 7. Test the Connection
 
