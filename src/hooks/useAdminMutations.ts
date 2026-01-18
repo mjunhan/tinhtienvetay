@@ -17,6 +17,8 @@ export function useUpdateServiceFee() {
             id: string;
             data: Partial<ServiceFeeRule>;
         }) => {
+            console.log('[useUpdateServiceFee] Updating service fee:', { id, data });
+
             const { data: result, error } = await supabase
                 .from('service_fee_rules')
                 .update(data)
@@ -24,13 +26,28 @@ export function useUpdateServiceFee() {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('[useUpdateServiceFee] Supabase error:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint,
+                });
+                throw error;
+            }
+
+            console.log('[useUpdateServiceFee] Update successful:', result);
             return result;
         },
         onSuccess: () => {
+            console.log('[useUpdateServiceFee] Invalidating queries...');
             // Invalidate all related queries to trigger refetch
             queryClient.invalidateQueries({ queryKey: ['service-fees'] });
             queryClient.invalidateQueries({ queryKey: ['pricing'] });
+        },
+        onError: (error: any) => {
+            console.error('[useUpdateServiceFee] Mutation failed:', error);
+            // Don't toast here - let the component handle it for more specific messages
         },
     });
 }
@@ -50,6 +67,8 @@ export function useUpdateShippingRate() {
             id: string;
             data: Partial<ShippingRateRule>;
         }) => {
+            console.log('[useUpdateShippingRate] Updating shipping rate:', { id, data });
+
             const { data: result, error } = await supabase
                 .from('shipping_rate_rules')
                 .update(data)
@@ -57,13 +76,28 @@ export function useUpdateShippingRate() {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('[useUpdateShippingRate] Supabase error:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint,
+                });
+                throw error;
+            }
+
+            console.log('[useUpdateShippingRate] Update successful:', result);
             return result;
         },
         onSuccess: () => {
+            console.log('[useUpdateShippingRate] Invalidating queries...');
             // Invalidate all related queries to trigger refetch
             queryClient.invalidateQueries({ queryKey: ['shipping-rates'] });
             queryClient.invalidateQueries({ queryKey: ['pricing'] });
+        },
+        onError: (error: any) => {
+            console.error('[useUpdateShippingRate] Mutation failed:', error);
+            // Don't toast here - let the component handle it for more specific messages
         },
     });
 }

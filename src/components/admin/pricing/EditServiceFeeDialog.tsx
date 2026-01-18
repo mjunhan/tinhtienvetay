@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { useUpdateServiceFee } from '@/hooks/useAdminMutations';
 import { serviceFeeSchema, type ServiceFeeFormData } from '@/schemas/admin';
 import type { ServiceFeeRule } from '@/types/database.types';
+import { SHIPPING_METHOD_LABELS } from '@/types';
 
 interface EditServiceFeeDialogProps {
     open: boolean;
@@ -54,6 +55,8 @@ export function EditServiceFeeDialog({
 
     const onSubmit = async (data: ServiceFeeFormData) => {
         try {
+            console.log('[EditServiceFeeDialog] Submitting:', data);
+
             await updateServiceFee.mutateAsync({
                 id: serviceFee.id,
                 data: {
@@ -66,9 +69,23 @@ export function EditServiceFeeDialog({
 
             toast.success('Đã cập nhật phí dịch vụ thành công!');
             onClose();
-        } catch (error) {
-            console.error('Error updating service fee:', error);
-            toast.error('Lỗi khi cập nhật phí dịch vụ. Vui lòng thử lại.');
+        } catch (error: any) {
+            console.error('[EditServiceFeeDialog] Submit error:', {
+                error,
+                message: error?.message,
+                code: error?.code,
+                statusCode: error?.status,
+                formData: data,
+            });
+
+            // Provide more specific error messages based on error type
+            if (error?.code === 'PGRST301' || error?.status === 401) {
+                toast.error('Lỗi phân quyền: Bạn không có quyền chỉnh sửa.');
+            } else if (error?.code === '23505') {
+                toast.error('Lỗi: Giá trị trùng lặp trong hệ thống.');
+            } else {
+                toast.error(`Lỗi khi cập nhật: ${error?.message || 'Vui lòng thử lại.'}`);
+            }
         }
     };
 
@@ -83,11 +100,7 @@ export function EditServiceFeeDialog({
                 <div>
                     <Label>Phương thức</Label>
                     <div className="px-4 py-2 bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
-                        {serviceFee.method === 'TMDT'
-                            ? 'TMDT'
-                            : serviceFee.method === 'TieuNgach'
-                                ? 'Tiểu Ngạch'
-                                : 'Chính Ngạch'}
+                        {SHIPPING_METHOD_LABELS[serviceFee.method]}
                     </div>
                 </div>
 

@@ -19,6 +19,7 @@ export type GlobalSettingsFormData = z.infer<typeof globalSettingsSchema>;
 
 /**
  * Validation schema for editing service fee rules
+ * Note: Form inputs use valueAsNumber to ensure numeric types
  */
 export const serviceFeeSchema = z.object({
     min_order_value: z.number()
@@ -43,6 +44,7 @@ export type ServiceFeeFormData = z.infer<typeof serviceFeeSchema>;
 
 /**
  * Validation schema for editing shipping rate rules
+ * Note: Form inputs use valueAsNumber to ensure numeric types
  */
 export const shippingRateSchema = z.object({
     min_value: z.number()

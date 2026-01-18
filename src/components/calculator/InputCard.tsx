@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { CalculatorFormValues } from '@/lib/schemas';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SHIPPING_METHOD_LABELS } from '@/types';
 
 interface InputCardProps {
     control: Control<CalculatorFormValues>;
@@ -37,9 +38,9 @@ export function InputCard({ control, register, errors }: InputCardProps) {
                         label="Hình thức vận chuyển"
                         {...register('method')}
                         options={[
-                            { value: 'TMDT', label: 'Thương Mại Điện Tử' },
-                            { value: 'TieuNgach', label: 'Tiểu Ngạch' },
-                            { value: 'ChinhNgach', label: 'Chính Ngạch' },
+                            { value: 'TMDT', label: SHIPPING_METHOD_LABELS.TMDT },
+                            { value: 'TieuNgach', label: SHIPPING_METHOD_LABELS.TieuNgach },
+                            { value: 'ChinhNgach', label: SHIPPING_METHOD_LABELS.ChinhNgach },
                         ]}
                     />
                     <Select

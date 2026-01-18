@@ -2,6 +2,13 @@ export type Warehouse = 'HN' | 'HCM';
 export type ShippingMethod = 'TMDT' | 'TieuNgach' | 'ChinhNgach';
 export type DepositPercent = 70 | 80;
 
+// UI-friendly labels for shipping methods (database uses enum values above)
+export const SHIPPING_METHOD_LABELS: Record<ShippingMethod, string> = {
+  TMDT: "Line Thương Mại Điện Tử",
+  TieuNgach: "Vận Chuyển Thường",
+  ChinhNgach: "Line Chính Ngạch",
+};
+
 export interface Product {
   id: string;
   quantity: number;

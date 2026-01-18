@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { useUpdateShippingRate } from '@/hooks/useAdminMutations';
 import { shippingRateSchema, type ShippingRateFormData } from '@/schemas/admin';
 import type { ShippingRateRule } from '@/types/database.types';
+import { SHIPPING_METHOD_LABELS } from '@/types';
 
 interface EditShippingRateDialogProps {
     open: boolean;
@@ -52,6 +53,8 @@ export function EditShippingRateDialog({
 
     const onSubmit = async (data: ShippingRateFormData) => {
         try {
+            console.log('[EditShippingRateDialog] Submitting:', data);
+
             await updateShippingRate.mutateAsync({
                 id: shippingRate.id,
                 data: {
@@ -63,9 +66,23 @@ export function EditShippingRateDialog({
 
             toast.success('Đã cập nhật phí vận chuyển thành công!');
             onClose();
-        } catch (error) {
-            console.error('Error updating shipping rate:', error);
-            toast.error('Lỗi khi cập nhật phí vận chuyển. Vui lòng thử lại.');
+        } catch (error: any) {
+            console.error('[EditShippingRateDialog] Submit error:', {
+                error,
+                message: error?.message,
+                code: error?.code,
+                statusCode: error?.status,
+                formData: data,
+            });
+
+            // Provide more specific error messages based on error type
+            if (error?.code === 'PGRST301' || error?.status === 401) {
+                toast.error('Lỗi phân quyền: Bạn không có quyền chỉnh sửa.');
+            } else if (error?.code === '23505') {
+                toast.error('Lỗi: Giá trị trùng lặp trong hệ thống.');
+            } else {
+                toast.error(`Lỗi khi cập nhật: ${error?.message || 'Vui lòng thử lại.'}`);
+            }
         }
     };
 
@@ -102,11 +119,7 @@ export function EditShippingRateDialog({
                     <div>
                         <Label>Phương thức</Label>
                         <div className="px-4 py-2 bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
-                            {shippingRate.method === 'TMDT'
-                                ? 'TMDT'
-                                : shippingRate.method === 'TieuNgach'
-                                    ? 'Tiểu Ngạch'
-                                    : 'Chính Ngạch'}
+                            {SHIPPING_METHOD_LABELS[shippingRate.method]}
                         </div>
                     </div>
                     <div>
