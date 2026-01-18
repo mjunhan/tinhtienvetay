@@ -1,7 +1,7 @@
 'use client';
 
 import { usePricingRules, useShippingRateRules } from '@/hooks/usePricingRules';
-import { ArrowLeft, Loader2, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertTriangle, CheckCircle, Info, Calculator, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { fadeIn } from '@/components/ui/motion-primitives';
@@ -59,10 +59,37 @@ export default function BangGiaPage() {
                     <p className="text-slate-300 text-lg max-w-2xl mx-auto">
                         Cập nhật tỷ giá mới nhất và các chính sách vận chuyển ưu đãi.
                     </p>
-                    <div className="mt-8 inline-flex items-center gap-3 bg-amber-500 text-white px-6 py-3 rounded-xl font-bold text-xl shadow-lg shadow-amber-500/20">
-                        <span>TỶ GIÁ HIỆN TẠI:</span>
-                        <span className="bg-white text-amber-600 px-3 py-1 rounded-lg">1¥ = {formatMoney(pricing?.exchange_rate || 0)}₫</span>
-                    </div>
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.3, type: "spring" }}
+                        className="mt-8 relative"
+                    >
+                        {/* Pulsing glow effect */}
+                        <motion.div
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="absolute inset-0 bg-amber-500 blur-xl opacity-50 rounded-2xl"
+                        />
+
+                        <div className="relative bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-4 rounded-2xl shadow-2xl">
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4">
+                                <TrendingUp className="w-6 h-6" />
+                                <div className="flex items-baseline gap-2 md:gap-3">
+                                    <span className="text-base md:text-lg font-medium">TỶ GIÁ HIỆN TẠI:</span>
+                                    <motion.span
+                                        key={pricing?.exchange_rate}
+                                        initial={{ scale: 1.2 }}
+                                        animate={{ scale: 1 }}
+                                        className="text-2xl md:text-3xl font-extrabold text-amber-50"
+                                    >
+                                        1¥ = {formatMoney(pricing?.exchange_rate || 0)}₫
+                                    </motion.span>
+                                </div>
+                                <span className="text-xs bg-white/20 px-2 py-1 rounded hidden md:inline">Cập nhật liên tục</span>
+                            </div>
+                        </div>
+                    </motion.div>
                 </motion.div>
 
                 {/* GLOBAL SERVICE FEE TABLE - NEW V0.4.2 */}
@@ -93,11 +120,21 @@ export default function BangGiaPage() {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="mb-16"
+                    className="mb-20"
                 >
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="h-10 w-2 bg-green-500 rounded-full" />
-                        <h2 className="text-3xl font-bold text-slate-900">Vận Chuyển Thường</h2>
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-xl bg-green-100 flex items-center justify-center">
+                                <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Vận Chuyển Thường</h2>
+                                <p className="text-green-600 font-medium text-sm mt-1">Phổ biến nhất</p>
+                            </div>
+                        </div>
+                        <span className="hidden md:inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-bold">80% khách hàng chọn</span>
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -131,7 +168,7 @@ export default function BangGiaPage() {
                                     viewport={{ once: true }}
                                 >
                                     {/* Row 1: 0 - 2 triệu */}
-                                    <motion.tr className="hover:bg-green-50/30 transition-colors">
+                                    <motion.tr className="bg-white hover:bg-green-50 transition-colors">
                                         <td className="py-4 px-6 font-medium text-slate-900">0 - 2 triệu</td>
                                         <td className="py-4 px-6 text-center border-l border-slate-100">
                                             <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">3%</span>
@@ -143,7 +180,7 @@ export default function BangGiaPage() {
                                     </motion.tr>
 
                                     {/* Row 2: 2 - 5 triệu */}
-                                    <motion.tr className="hover:bg-green-50/30 transition-colors">
+                                    <motion.tr className="bg-slate-50 hover:bg-green-50 transition-colors">
                                         <td className="py-4 px-6 font-medium text-slate-900">2 - 5 triệu</td>
                                         <td className="py-4 px-6 text-center border-l border-slate-100">
                                             <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">1.5%</span>
@@ -155,7 +192,7 @@ export default function BangGiaPage() {
                                     </motion.tr>
 
                                     {/* Row 3: > 5 triệu */}
-                                    <motion.tr className="hover:bg-green-50/30 transition-colors">
+                                    <motion.tr className="bg-white hover:bg-green-50 transition-colors">
                                         <td className="py-4 px-6 font-medium text-slate-900">{'>'} 5 triệu</td>
                                         <td className="py-4 px-6 text-center border-l border-slate-100">
                                             <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">1.2%</span>
@@ -179,14 +216,21 @@ export default function BangGiaPage() {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="mb-16"
+                    className="mb-20"
                 >
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="h-10 w-2 bg-red-500 rounded-full" />
-                        <div>
-                            <h2 className="text-3xl font-bold text-slate-900">Line Thương Mại Điện Tử</h2>
-                            <p className="text-red-500 font-medium text-sm">Hỏa tốc 2-4 ngày về kho HN</p>
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-xl bg-red-100 flex items-center justify-center">
+                                <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Line Thương Mại Điện Tử</h2>
+                                <p className="text-red-600 font-medium text-sm mt-1">⚡ Hỏa tốc 2-4 ngày về kho HN</p>
+                            </div>
                         </div>
+                        <span className="hidden md:inline-block px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-bold">Express</span>
                     </div>
 
                     {/* Warning Banner */}
@@ -224,7 +268,8 @@ export default function BangGiaPage() {
                                     {pricing?.tmdt_shipping.map((tier, idx) => (
                                         <motion.tr
                                             key={idx}
-                                            className="hover:bg-red-50/30 transition-colors"
+                                            className={`${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                                                } hover:bg-red-50 transition-colors`}
                                             variants={{
                                                 hidden: { opacity: 0, x: -10 },
                                                 show: { opacity: 1, x: 0 }
@@ -282,6 +327,23 @@ export default function BangGiaPage() {
                     <p>© 2026 Tính Tiền Về Tay. Bảng giá có hiệu lực từ 12/07/2025.</p>
                 </div>
             </div>
+
+            {/* Floating CTA Button */}
+            <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="fixed bottom-8 right-8 z-50"
+            >
+                <Link
+                    href="/"
+                    className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4 rounded-full shadow-2xl hover:shadow-amber-500/50 font-bold text-lg hover:scale-105 transition-all"
+                >
+                    <Calculator className="w-6 h-6" />
+                    <span className="hidden sm:inline">Tính Giá Ngay</span>
+                    <span className="sm:hidden">Tính Giá</span>
+                </Link>
+            </motion.div>
         </div >
     );
 }
