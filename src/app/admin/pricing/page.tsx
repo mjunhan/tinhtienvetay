@@ -9,7 +9,7 @@ import { toast, Toaster } from 'sonner';
 import { DollarSign, Truck, Info, Pencil } from 'lucide-react';
 import { EditServiceFeeDialog } from '@/components/admin/pricing/EditServiceFeeDialog';
 import { EditShippingRateDialog } from '@/components/admin/pricing/EditShippingRateDialog';
-import { AdminOfficialTable } from '@/components/admin/pricing/AdminOfficialTable';
+import { AdminPricingTable } from '@/components/admin/pricing/AdminPricingTable';
 import type { ServiceFeeRule, ShippingRateRule } from '@/types/database.types';
 
 export default function AdminPricingPage() {
@@ -21,7 +21,8 @@ export default function AdminPricingPage() {
     // Dialog states
     const [editingServiceFee, setEditingServiceFee] = useState<ServiceFeeRule | null>(null);
     const [editingShippingRate, setEditingShippingRate] = useState<ShippingRateRule | null>(null);
-    const [createTemplate, setCreateTemplate] = useState<Partial<ShippingRateRule> | null>(null);
+    // Helper state for creating new rule with defaults
+    const [createTemplate, setCreateTemplate] = useState<Partial<ShippingRateRule>>({});
 
     const { data: serviceFees, isLoading: isLoadingFees, refetch: refetchFees } = useServiceFeeRules();
     const { data: shippingRates, isLoading: isLoadingRates, refetch: refetchRates } = useShippingRateRules();
@@ -69,6 +70,92 @@ export default function AdminPricingPage() {
         );
     }
 
+    // --- COLUMNS DEFINITIONS ---
+
+    // 1. Tieu Ngach Checks
+    const tieuNgachColumns = [
+        {
+            header: "Mức cân (kg)",
+            accessor: (r: ShippingRateRule) => <span className="font-medium text-slate-900">{r.min_value} - {r.max_value === 999999999 ? 'Trở lên' : r.max_value} kg</span>
+        },
+        {
+            header: "Kho",
+            accessor: (r: ShippingRateRule) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${r.warehouse === 'HN' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
+                    {r.warehouse}
+                </span>
+            )
+        },
+        {
+            header: "Giá cước (VNĐ)",
+            accessor: (r: ShippingRateRule) => <span className="font-bold text-red-600">{formatMoney(r.price)}</span>,
+            className: "text-center"
+        }
+    ];
+
+    // 2. TMDT Checks
+    const tmdtColumns = [
+        {
+            header: "Giá trị đơn (VNĐ)",
+            accessor: (r: ShippingRateRule) => <span className="font-medium text-slate-900">{formatMoney(r.min_value)} - {r.max_value === 999999999 ? 'Trở lên' : formatMoney(r.max_value)}</span>
+        },
+        {
+            header: "Kho",
+            accessor: (r: ShippingRateRule) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${r.warehouse === 'HN' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
+                    {r.warehouse}
+                </span>
+            )
+        },
+        {
+            header: "Đơn giá",
+            accessor: (r: ShippingRateRule) => <span className="font-bold text-red-600">{formatMoney(r.price)}</span>,
+            className: "text-center"
+        }
+    ];
+
+    // 3. Chinh Ngach Checks
+    const chinhNgachColumns = [
+        {
+            header: "Mức lượng",
+            accessor: (r: ShippingRateRule) => <span className="font-medium text-slate-900">{r.min_value} - {r.max_value === 999999999 ? 'Trở lên' : r.max_value} {r.type === 'volume_based' ? 'm³' : 'kg'}</span>
+        },
+        {
+            header: "Kho",
+            accessor: (r: ShippingRateRule) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${r.warehouse === 'HN' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
+                    {r.warehouse}
+                </span>
+            )
+        },
+        {
+            header: "Đơn giá",
+            accessor: (r: ShippingRateRule) => <span className="font-bold text-red-600">{formatMoney(r.price)}</span>,
+            className: "text-center"
+        }
+    ];
+
+    // Handlers
+    const handleEdit = (rule: ShippingRateRule) => setEditingShippingRate(rule);
+    const handleDelete = (id: string) => deleteMutation.mutate(id);
+    const handleCreate = (method: 'TieuNgach' | 'TMDT' | 'ChinhNgach', type: 'weight_based' | 'value_based' | 'volume_based' = 'weight_based', warehouse: 'HN' | 'HCM' = 'HN', subtype: 'heavy' | 'bulky' | null = null) => {
+        // Prepare template for new rule
+        const template: Partial<ShippingRateRule> = {
+            method,
+            type,
+            warehouse,
+            subtype,
+            min_value: 0,
+            max_value: 999999999,
+            price: 0
+        };
+        // We set editingShippingRate with a partial object that mimics a new rule (no id)
+        // But the dialog expects ShippingRateRule (with id). 
+        // We can pass a "fake" object with empty id to signal creation mode.
+        setEditingShippingRate({ ...template, id: '' } as ShippingRateRule);
+    };
+
+
     const renderServiceFeeTable = (method: string, title: string, gradientClass: string, colorClass: string) => {
         const fees = serviceFees?.filter(sf => sf.method === method).sort((a, b) => a.min_order_value - b.min_order_value) || [];
 
@@ -109,105 +196,6 @@ export default function AdminPricingPage() {
                                     <td className="px-6 py-4 text-sm">
                                         <button
                                             onClick={() => setEditingServiceFee(fee)}
-                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                            title="Chỉnh sửa"
-                                        >
-                                            <Pencil size={16} className="text-gray-600" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        );
-    };
-
-    const renderShippingRateTable = (
-        method: string,
-        title: string,
-        type: string,
-        subtype: string | null,
-        gradientClass: string
-    ) => {
-        const rates = shippingRates?.filter(
-            r => r.method === method && r.type === type && (subtype ? r.subtype === subtype : true)
-        ).sort((a, b) => a.min_value - b.min_value) || [];
-
-        if (rates.length === 0) return null;
-
-        const getUnit = () => {
-            if (type === 'value_based') return 'VND';
-            if (type === 'weight_based') return 'kg';
-            if (type === 'volume_based') return 'm³';
-            return '';
-        };
-
-        const getPriceUnit = () => {
-            if (type === 'weight_based') return 'VND/kg';
-            if (type === 'volume_based') return 'VND/m³';
-            return 'VND';
-        };
-
-        // Group by value range and warehouse
-        const groupedRates: { [key: string]: { rate: ShippingRateRule; hn?: number; hcm?: number } } = {};
-        rates.forEach(rate => {
-            const key = `${rate.min_value}-${rate.max_value}`;
-            if (!groupedRates[key]) {
-                groupedRates[key] = { rate };
-            }
-            if (rate.warehouse === 'HN') {
-                groupedRates[key].hn = rate.price;
-            } else {
-                groupedRates[key].hcm = rate.price;
-            }
-        });
-
-        return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className={`${gradientClass} px-6 py-4`}>
-                    <h2 className="text-xl font-bold text-white">{title}</h2>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Từ ({getUnit()})
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Đến ({getUnit()})
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kho</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Giá ({getPriceUnit()})
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {rates.map((rate) => (
-                                <tr key={rate.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm">
-                                        {type === 'value_based' ? formatMoney(rate.min_value) : rate.min_value}
-                                        {type !== 'value_based' && ` ${getUnit()}`}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                        {type === 'value_based' ? formatMoney(rate.max_value) : rate.max_value}
-                                        {type !== 'value_based' && ` ${getUnit()}`}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                                            {rate.warehouse}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-blue-600">
-                                        {formatMoney(rate.price)} {type === 'value_based' ? '₫' : ''}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <button
-                                            onClick={() => setEditingShippingRate(rate)}
                                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                                             title="Chỉnh sửa"
                                         >
@@ -306,43 +294,69 @@ export default function AdminPricingPage() {
                         </button>
                     </div>
 
-                    {/* Official Line (Chính Ngạch) - New Modern UI */}
+                    {/* Official Line (Chính Ngạch) */}
                     {shippingSubTab === 'official' && (
-                        <AdminOfficialTable
-                            rules={shippingRates || []}
-                            onEdit={(rule) => setEditingShippingRate(rule)}
-                            onDelete={(id) => deleteMutation.mutate(id)}
-                            onCreate={(template) => {
-                                setCreateTemplate(template);
-                                setEditingShippingRate({ ...template, price: 0, id: '' } as ShippingRateRule);
-                            }}
-                        />
+                        <div className="space-y-8">
+                            <AdminPricingTable
+                                title="Chính Ngạch - Hàng Nặng (Kg)"
+                                rules={shippingRates?.filter(r => r.method === 'ChinhNgach' && r.type === 'weight_based') || []}
+                                columns={chinhNgachColumns}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onCreate={() => handleCreate('ChinhNgach', 'weight_based')}
+                            />
+
+                            <AdminPricingTable
+                                title="Chính Ngạch - Hàng Cồng Kềnh (m³)"
+                                rules={shippingRates?.filter(r => r.method === 'ChinhNgach' && r.type === 'volume_based') || []}
+                                columns={chinhNgachColumns}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onCreate={() => handleCreate('ChinhNgach', 'volume_based')}
+                            />
+                        </div>
                     )}
 
                     {/* Other shipping methods (TMDT, Tiểu Ngạch) */}
                     {shippingSubTab === 'other' && (
-                        <>
-                            {renderShippingRateTable('TMDT', 'TMDT - Theo giá trị đơn hàng', 'value_based', null, 'bg-gradient-to-r from-blue-600 to-purple-600')}
-                            {renderShippingRateTable('TieuNgach', 'Tiểu Ngạch - Theo giá trị đơn hàng', 'value_based', null, 'bg-gradient-to-r from-green-600 to-teal-600')}
-                        </>
+                        <div className="space-y-8">
+                            <AdminPricingTable
+                                title="Vận Chuyển Thường (Tiểu Ngạch)"
+                                rules={shippingRates?.filter(r => r.method === 'TieuNgach') || []}
+                                columns={tieuNgachColumns}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onCreate={() => handleCreate('TieuNgach', 'weight_based')} // Assuming Weight based per prompt
+                            />
+
+                            <AdminPricingTable
+                                title="Line TMĐT"
+                                rules={shippingRates?.filter(r => r.method === 'TMDT') || []}
+                                columns={tmdtColumns}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onCreate={() => handleCreate('TMDT', 'value_based')} // Assuming Value based usually
+                            />
+                        </div>
                     )}
                 </div>
             )}
 
-            {/* Edit Dialogs */}
-            {editingServiceFee && (
-                <EditServiceFeeDialog
-                    open={true}
-                    onClose={() => setEditingServiceFee(null)}
-                    serviceFee={editingServiceFee}
-                />
-            )}
-
+            {/* Edit Rule Dialog */}
             {editingShippingRate && (
                 <EditShippingRateDialog
                     open={true}
                     onClose={() => setEditingShippingRate(null)}
                     shippingRate={editingShippingRate}
+                />
+            )}
+
+            {/* Edit Service Fee Dialog (Unchanged logic) */}
+            {editingServiceFee && (
+                <EditServiceFeeDialog
+                    open={true}
+                    onClose={() => setEditingServiceFee(null)}
+                    serviceFee={editingServiceFee}
                 />
             )}
 

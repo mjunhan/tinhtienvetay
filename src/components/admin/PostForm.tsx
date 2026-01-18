@@ -108,7 +108,8 @@ export default function PostForm({ post, onSubmit, isSubmitting, submitLabel }: 
                 <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={handleSubmit(onSubmit)}
+                    type="submit"
+                    form="post-form"
                     disabled={isSubmitting}
                     className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -118,7 +119,7 @@ export default function PostForm({ post, onSubmit, isSubmitting, submitLabel }: 
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-md border border-amber-100 p-8 space-y-6">
+            <form id="post-form" onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-md border border-amber-100 p-8 space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-6">
                         {/* Title */}

@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     getAllPosts,
@@ -61,14 +63,20 @@ export function usePostById(id: string) {
  */
 export function useCreatePost() {
     const queryClient = useQueryClient();
+    const router = useRouter();
 
     return useMutation({
         mutationFn: (input: CreatePostInput) => createPost(input),
+        onMutate: () => {
+            console.log("🚀 Starting Post Creation...");
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["posts"] });
             toast.success("Bài viết đã được tạo thành công!");
+            router.push("/admin/posts");
         },
         onError: (error: Error) => {
+            console.error("❌ Post Creation Failed:", error);
             toast.error(error.message || "Không thể tạo bài viết");
         },
     });
@@ -79,12 +87,14 @@ export function useCreatePost() {
  */
 export function useUpdatePost() {
     const queryClient = useQueryClient();
+    const router = useRouter();
 
     return useMutation({
         mutationFn: (input: UpdatePostInput) => updatePost(input),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["posts"] });
             toast.success("Bài viết đã được cập nhật!");
+            router.push("/admin/posts");
         },
         onError: (error: Error) => {
             toast.error(error.message || "Không thể cập nhật bài viết");
