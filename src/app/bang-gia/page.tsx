@@ -111,7 +111,6 @@ export default function BangGiaPage() {
                 >
                     <OfficialShippingTable
                         rules={shippingRates || []}
-                        exchangeRate={pricing?.exchange_rate || 0}
                     />
                 </motion.div>
 
