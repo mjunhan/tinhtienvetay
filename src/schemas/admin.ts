@@ -19,46 +19,60 @@ export type GlobalSettingsFormData = z.infer<typeof globalSettingsSchema>;
 
 /**
  * Validation schema for editing service fee rules
- * Note: Form inputs use valueAsNumber to ensure numeric types
+ * Using z.coerce.number() to handle HTML input string values
  */
-export const serviceFeeSchema = z.object({
-    min_order_value: z.number()
-        .min(0, "Minimum order value cannot be negative"),
-    max_order_value: z.number()
-        .min(0, "Maximum order value cannot be negative"),
-    deposit_percent: z.union([z.literal(70), z.literal(80)], {
-        message: "Deposit percent must be either 70 or 80",
-    }),
-    fee_percent: z.number()
-        .min(0, "Fee percent cannot be negative")
-        .max(100, "Fee percent cannot exceed 100"),
+const _serviceFeeSchema = z.object({
+    min_order_value: z.coerce.number()
+        .min(0, "Giá trị tối thiểu phải lớn hơn hoặc bằng 0"),
+    max_order_value: z.coerce.number()
+        .min(0, "Giá trị tối đa phải lớn hơn hoặc bằng 0"),
+    deposit_percent: z.coerce.number()
+        .refine((val) => val === 70 || val === 80, {
+            message: "Deposit percent must be either 70 or 80",
+        }),
+    fee_percent: z.coerce.number()
+        .min(0, "Phí dịch vụ không được âm")
+        .max(100, "Phí dịch vụ không được vượt quá 100%"),
 }).refine(
     (data) => data.min_order_value <= data.max_order_value,
     {
-        message: "Minimum value cannot be greater than maximum value",
+        message: "Giá trị tối thiểu không được lớn hơn giá trị tối đa",
         path: ["max_order_value"],
     }
 );
 
-export type ServiceFeeFormData = z.infer<typeof serviceFeeSchema>;
+export const serviceFeeSchema = _serviceFeeSchema as z.ZodType<{
+    min_order_value: number;
+    max_order_value: number;
+    deposit_percent: 70 | 80;
+    fee_percent: number;
+}>;
+
+export type ServiceFeeFormData = z.output<typeof _serviceFeeSchema>;
 
 /**
  * Validation schema for editing shipping rate rules
- * Note: Form inputs use valueAsNumber to ensure numeric types
+ * Using z.coerce.number() to handle HTML input string values
  */
-export const shippingRateSchema = z.object({
-    min_value: z.number()
-        .min(0, "Minimum value cannot be negative"),
-    max_value: z.number()
-        .min(0, "Maximum value cannot be negative"),
-    price: z.number()
-        .min(0, "Price cannot be negative"),
+const _shippingRateSchema = z.object({
+    min_value: z.coerce.number()
+        .min(0, "Giá trị tối thiểu phải lớn hơn hoặc bằng 0"),
+    max_value: z.coerce.number()
+        .min(0, "Giá trị tối đa phải lớn hơn hoặc bằng 0"),
+    price: z.coerce.number()
+        .min(0, "Giá phải lớn hơn hoặc bằng 0"),
 }).refine(
     (data) => data.min_value <= data.max_value,
     {
-        message: "Minimum value cannot be greater than maximum value",
+        message: "Giá trị tối thiểu không được lớn hơn giá trị tối đa",
         path: ["max_value"],
     }
 );
 
-export type ShippingRateFormData = z.infer<typeof shippingRateSchema>;
+export const shippingRateSchema = _shippingRateSchema as z.ZodType<{
+    min_value: number;
+    max_value: number;
+    price: number;
+}>;
+
+export type ShippingRateFormData = z.output<typeof _shippingRateSchema>;

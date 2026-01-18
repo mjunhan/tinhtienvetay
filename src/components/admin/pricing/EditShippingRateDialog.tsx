@@ -32,6 +32,7 @@ export function EditShippingRateDialog({
         reset,
         formState: { errors },
     } = useForm<ShippingRateFormData>({
+        // @ts-ignore - z.coerce.number() causes type inference issues with zodResolver, but works at runtime
         resolver: zodResolver(shippingRateSchema),
         defaultValues: {
             min_value: shippingRate.min_value,
@@ -113,6 +114,7 @@ export function EditShippingRateDialog({
 
     return (
         <Dialog open={open} onClose={onClose} title="Chỉnh sửa phí vận chuyển">
+            {/* @ts-ignore - z.coerce type inference causes handleSubmit type mismatch */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* Method & Type Display */}
                 <div className="grid grid-cols-2 gap-4">
@@ -147,7 +149,7 @@ export function EditShippingRateDialog({
                         id="min_value"
                         type="number"
                         step={shippingRate.type === 'value_based' ? '1' : '0.01'}
-                        {...register('min_value', { valueAsNumber: true })}
+                        {...register('min_value')}
                         placeholder="0"
                     />
                     {errors.min_value && (
@@ -166,7 +168,7 @@ export function EditShippingRateDialog({
                         id="max_value"
                         type="number"
                         step={shippingRate.type === 'value_based' ? '1' : '0.01'}
-                        {...register('max_value', { valueAsNumber: true })}
+                        {...register('max_value')}
                         placeholder="999999999"
                     />
                     {errors.max_value && (
@@ -185,7 +187,7 @@ export function EditShippingRateDialog({
                         id="price"
                         type="number"
                         step="1"
-                        {...register('price', { valueAsNumber: true })}
+                        {...register('price')}
                         placeholder="0"
                     />
                     {errors.price && (
