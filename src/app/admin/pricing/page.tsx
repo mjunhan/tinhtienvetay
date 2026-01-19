@@ -248,7 +248,7 @@ export default function AdminPricingPage() {
                     const { error: upsertError } = await supabase
                         .from('shipping_rate_rules')
                         .upsert(officialShippingData.map(r => ({
-                            id: r.id, // ID undefined = New Insert
+                            ...(r.id && { id: r.id }),
                             method: 'ChinhNgach',
                             type: r.type,
                             subtype: r.subtype,
@@ -256,10 +256,7 @@ export default function AdminPricingPage() {
                             min_value: r.min_value,
                             max_value: r.max_value,
                             price: r.price
-                        })).map(r => {
-                            if (!r.id) delete r.id; // Ensure Supabase treats as insert
-                            return r;
-                        }));
+                        })));
                     if (upsertError) throw upsertError;
                 }
 
@@ -280,16 +277,13 @@ export default function AdminPricingPage() {
                     const { error: upsertFeeError } = await supabase
                         .from('service_fee_rules')
                         .upsert(serviceFeeData.map(r => ({
-                            id: r.id,
+                            ...(r.id && { id: r.id }),
                             method: 'TieuNgach',
                             min_order_value: r.min_order_value,
                             max_order_value: r.max_order_value,
                             deposit_percent: r.deposit_percent,
                             fee_percent: r.fee_percent
-                        })).map(r => {
-                            if (!r.id) delete r.id;
-                            return r;
-                        }));
+                        })));
                     if (upsertFeeError) throw upsertFeeError;
                 }
 
