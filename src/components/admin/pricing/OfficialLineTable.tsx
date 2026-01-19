@@ -24,6 +24,7 @@ const RangeRow = ({ control, index, name, suffix, onRemove }: any) => {
                             value={field.value}
                             onValueChange={(v) => field.onChange(v.floatValue)}
                             thousandSeparator="."
+                            decimalSeparator=","
                             className="w-20 px-2 py-1.5 border rounded text-right text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                             placeholder="Min"
                         />
@@ -38,6 +39,7 @@ const RangeRow = ({ control, index, name, suffix, onRemove }: any) => {
                             value={field.value}
                             onValueChange={(v) => field.onChange(v.floatValue)}
                             thousandSeparator="."
+                            decimalSeparator=","
                             className="w-20 px-2 py-1.5 border rounded text-right text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                             placeholder="Max"
                         />
@@ -57,6 +59,7 @@ const RangeRow = ({ control, index, name, suffix, onRemove }: any) => {
                                 value={field.value}
                                 onValueChange={(v) => field.onChange(v.floatValue)}
                                 thousandSeparator="."
+                                decimalSeparator=","
                                 className="w-full pl-2 pr-6 py-1.5 text-center font-bold text-red-600 bg-white border border-gray-200 rounded-md focus:ring-1 focus:ring-red-500 outline-none text-sm"
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₫</span>
@@ -77,6 +80,7 @@ const RangeRow = ({ control, index, name, suffix, onRemove }: any) => {
                                 value={field.value}
                                 onValueChange={(v) => field.onChange(v.floatValue)}
                                 thousandSeparator="."
+                                decimalSeparator=","
                                 className="w-full pl-2 pr-6 py-1.5 text-center font-bold text-red-600 bg-white border border-gray-200 rounded-md focus:ring-1 focus:ring-red-500 outline-none text-sm"
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₫</span>
