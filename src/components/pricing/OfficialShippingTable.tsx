@@ -1,171 +1,310 @@
+import { useEffect, useMemo } from 'react';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { NumericFormat } from 'react-number-format';
+import { Plus, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { ShippingRateRule } from "@/types/database.types";
 
 interface OfficialShippingTableProps {
     rules: ShippingRateRule[];
     mode?: "view" | "edit";
-    onUpdate?: (id: string, field: 'price', value: number) => void;
+    // For single field updates we used this, but now we need bulk update or full replacement
+    onDataChange?: (newData: ShippingRateRule[]) => void;
 }
 
-// Simple Currency Input Wrapper
-const CurrencyInput = ({ value, onChange, disabled }: { value: number, onChange: (val: number) => void, disabled?: boolean }) => {
-    // Basic parser/formatter
-    const displayValue = new Intl.NumberFormat('vi-VN').format(value);
+// Editable Cell Component
+const PriceInput = ({ control, name }: { control: any, name: string }) => (
+    <Controller
+        control={control}
+        name={name}
+        render={({ field }) => (
+            <div className="relative inline-block w-full max-w-[120px]">
+                <NumericFormat
+                    value={field.value}
+                    onValueChange={(values) => field.onChange(values.floatValue)}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    suffix=""
+                    allowNegative={false}
+                    className="w-full pl-2 pr-6 py-2 text-center font-bold text-red-600 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all text-sm"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-xs">₫</span>
+            </div>
+        )}
+    />
+);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Remove non-digits
-        const raw = e.target.value.replace(/\D/g, '');
-        onChange(Number(raw));
-    };
+// Range Editor Component
+const RangeEditor = ({ control, index, namePrefix, suffix, isEditing }: { control: any, index: number, namePrefix: string, suffix: string, isEditing: boolean }) => {
+    // If not editing, display text logic
+    // But we are inside a map, so we can access values via useWatch strictly if needed, but here simple rendering is enough if we trust passed values.
+    // Actually, react-hook-form is controlled, so we use Controller.
 
     return (
-        <div className="relative inline-block w-28">
-            <input
-                type="text"
-                value={displayValue}
-                onChange={handleChange}
-                className="w-full pl-2 pr-8 py-1 text-center font-bold text-red-600 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all disabled:opacity-50"
-                disabled={disabled}
+        <div className="flex items-center gap-2 justify-center">
+            <Controller
+                control={control}
+                name={`${namePrefix}.${index}.min_value`}
+                render={({ field }) => isEditing ? (
+                    <NumericFormat
+                        value={field.value}
+                        onValueChange={(v) => field.onChange(v.floatValue)}
+                        className="w-20 px-2 py-1 text-right border rounded text-sm font-medium"
+                        thousandSeparator="."
+                        placeholder="Min"
+                    />
+                ) : (
+                    <span className="hidden" /> // Logic handled by wrapper
+                )}
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-xs">₫</span>
+            {isEditing && <span className="text-gray-400">-</span>}
+            <Controller
+                control={control}
+                name={`${namePrefix}.${index}.max_value`}
+                render={({ field }) => isEditing ? (
+                    <NumericFormat
+                        value={field.value}
+                        onValueChange={(v) => field.onChange(v.floatValue)}
+                        className="w-20 px-2 py-1 text-right border rounded text-sm font-medium"
+                        thousandSeparator="."
+                        placeholder="Max"
+                    />
+                ) : (
+                    <span className="hidden" />
+                )}
+            />
+            {isEditing && <span className="text-gray-500 text-xs ml-1">{suffix}</span>}
         </div>
     );
 };
 
-export function OfficialShippingTable({ rules, mode = "view", onUpdate }: OfficialShippingTableProps) {
-    // Helper to find rule dynamically
-    const findRule = (
-        type: 'weight_based' | 'volume_based',
-        min: number,
-        warehouse: 'HN' | 'HCM'
-    ) => {
-        return rules.find(r =>
-            r.method === 'ChinhNgach' &&
-            r.type === type &&
-            r.warehouse === warehouse &&
-            r.min_value === min
-        );
+// Sub-Component for a Card (Heavy or Bulky) to keep code clean
+const ShippingCard = ({ title, type, control, name, mode, onRemove, onAdd, suffix }: any) => {
+    const { fields } = useFieldArray({ control, name });
+
+    const formatRange = (min: number, max: number) => {
+        const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
+        if (min === 0) return `Dưới ${fmt(max)}${suffix}`;
+        if (max > 100000000) return `Trên ${fmt(min)}${suffix}`;
+        return `${fmt(min)}${suffix} - ${fmt(max)}${suffix}`;
     };
 
-    const renderCell = (type: 'weight_based' | 'volume_based', min: number, warehouse: 'HN' | 'HCM') => {
-        const rule = findRule(type, min, warehouse);
-        if (!rule) return <span className="text-gray-300">---</span>;
+    return (
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 flex flex-col h-full">
+            <div className="bg-slate-900 py-4 px-6 border-b border-slate-800">
+                <h3 className="text-white font-bold text-lg text-center uppercase tracking-wide">
+                    {title}
+                </h3>
+            </div>
 
-        if (mode === 'edit' && onUpdate) {
-            return (
-                <CurrencyInput
-                    value={rule.price}
-                    onChange={(val) => onUpdate(rule.id, 'price', val)}
-                />
-            );
-        }
+            <div className="flex-1">
+                {/* Table Header */}
+                <div className="grid grid-cols-[1.5fr_1fr_1fr_auto] bg-slate-50 border-b border-gray-200 text-sm font-semibold text-slate-700">
+                    <div className="py-3 px-4 text-left">Số lượng</div>
+                    <div className="py-3 px-2 text-center">Hà Nội</div>
+                    <div className="py-3 px-2 text-center">Hồ Chí Minh</div>
+                    {mode === 'edit' && <div className="w-10"></div>}
+                </div>
 
-        return new Intl.NumberFormat('vi-VN').format(rule.price);
-    };
+                {/* Table Body */}
+                <div className="divide-y divide-gray-100">
+                    {fields.map((field: any, index: number) => (
+                        <div key={field.id} className="grid grid-cols-[1.5fr_1fr_1fr_auto] hover:bg-gray-50 transition-colors items-center p-2">
+                            <div className="px-2 text-sm font-medium text-slate-900">
+                                {mode === 'edit' ? (
+                                    <RangeEditor control={control} index={index} namePrefix={name} suffix={suffix} isEditing={true} />
+                                ) : (
+                                    formatRange(field.min_value, field.max_value)
+                                )}
+                            </div>
+                            <div className="px-1 text-center">
+                                {mode === 'edit' ? (
+                                    <PriceInput control={control} name={`${name}.${index}.price_hn`} />
+                                ) : (
+                                    <span className="text-red-600 font-bold">{new Intl.NumberFormat('vi-VN').format(field.price_hn)}</span>
+                                )}
+                            </div>
+                            <div className="px-1 text-center">
+                                {mode === 'edit' ? (
+                                    <PriceInput control={control} name={`${name}.${index}.price_hcm`} />
+                                ) : (
+                                    <span className="text-red-600 font-bold">{new Intl.NumberFormat('vi-VN').format(field.price_hcm)}</span>
+                                )}
+                            </div>
+                            {mode === 'edit' && (
+                                <div className="text-center">
+                                    <button onClick={() => onRemove(index)} className="text-red-400 hover:text-red-600 p-1">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    {fields.length === 0 && <div className="p-4 text-center text-gray-400 text-sm">Chưa có dữ liệu</div>}
+                </div>
+            </div>
 
-    const Cell = ({ type, min, warehouse }: { type: 'weight_based' | 'volume_based', min: number, warehouse: 'HN' | 'HCM' }) => (
-        <div className="py-4 px-4 text-center text-red-600 font-bold">
-            {renderCell(type, min, warehouse)}
+            {mode === 'edit' && (
+                <div className="p-3 border-t border-gray-100 bg-gray-50 text-center">
+                    <Button variant="outline" size="sm" onClick={onAdd} className="w-full border-dashed">
+                        <Plus size={14} className="mr-1" /> Thêm khoảng
+                    </Button>
+                </div>
+            )}
         </div>
     );
+}
+
+export function OfficialShippingTable({ rules, mode = "view", onDataChange }: OfficialShippingTableProps) {
+    // 1. Transform Flat Rules to Heavy/Bulky Structures
+    interface ExtendedRule extends ShippingRateRule {
+        // We'll flatten warehouse rows into one "Display Row" for the UI
+        price_hn: number;
+        price_hcm: number;
+        id_hn?: string;
+        id_hcm?: string;
+    }
+
+    const { heavyRows, bulkyRows } = useMemo(() => {
+        const process = (subtype: string) => {
+            const subset = rules.filter(r => r.method === 'ChinhNgach' && (r.type === 'weight_based' ? 'heavy' : 'bulky') === (subtype === 'weight' ? 'heavy' : 'bulky'));
+
+            // The structure in DB uses `type`='weight_based' for 'heavy' UI card
+            // and `type`='volume_based' for 'bulky' UI card.
+            // Wait, `usePricingRules` lines 157-163 filter by `subtype === 'heavy'`. 
+            // Does `ShippingRateRule` have columns `subtype`? 
+            // Checking `usePricingRules` line 297: `select('*')`. 
+            // Line 4 in `usePricingRules` imports type from database.types.
+            // Line 162 in `usePricingRules` calls `r.subtype`.
+            // If subtype exists, we use it. If not, we infer from type.
+            // Assumption: `weight_based` = heavy card, `volume_based` = bulky card.
+
+            const typeKey = subtype === 'weight' ? 'weight_based' : 'volume_based';
+            const relevant = rules.filter(r => r.method === 'ChinhNgach' && r.type === typeKey);
+
+            const map = new Map<string, any>();
+            relevant.forEach(r => {
+                const key = `${r.min_value}-${r.max_value}`;
+                const existing = map.get(key) || {
+                    min_value: r.min_value,
+                    max_value: r.max_value,
+                    price_hn: 0,
+                    price_hcm: 0
+                };
+                if (r.warehouse === 'HN') {
+                    existing.price_hn = r.price;
+                    existing.id_hn = r.id;
+                } else {
+                    existing.price_hcm = r.price;
+                    existing.id_hcm = r.id;
+                }
+                map.set(key, existing);
+            });
+
+            return Array.from(map.values()).sort((a, b) => a.min_value - b.min_value);
+        };
+
+        return {
+            heavyRows: process('weight'),
+            bulkyRows: process('volume')
+        };
+    }, [rules]);
+
+    const { control, watch, reset, getValues } = useForm({
+        defaultValues: {
+            heavy: heavyRows,
+            bulky: bulkyRows
+        }
+    });
+
+    // Reset loop prevention
+    useEffect(() => {
+        const currentVals = getValues();
+        const nextVals = { heavy: heavyRows, bulky: bulkyRows };
+        if (JSON.stringify(nextVals) !== JSON.stringify(currentVals)) {
+            reset(nextVals);
+        }
+    }, [heavyRows, bulkyRows, reset, getValues]);
+
+    // Watcher
+    useEffect(() => {
+        if (mode !== 'edit' || !onDataChange) return;
+        const subscription = watch((value) => {
+            const flattened: ShippingRateRule[] = [];
+
+            // Validate and Flat Heavy
+            value.heavy?.forEach((r: any) => {
+                if (r.price_hn > 0 || r.id_hn) {
+                    flattened.push({
+                        id: r.id_hn,
+                        method: 'ChinhNgach',
+                        type: 'weight_based',
+                        subtype: 'heavy', // Explicitly setting for consistency
+                        warehouse: 'HN',
+                        min_value: r.min_value,
+                        max_value: r.max_value,
+                        price: r.price_hn
+                    } as ShippingRateRule);
+                }
+                if (r.price_hcm > 0 || r.id_hcm) {
+                    flattened.push({
+                        id: r.id_hcm,
+                        method: 'ChinhNgach',
+                        type: 'weight_based',
+                        subtype: 'heavy',
+                        warehouse: 'HCM',
+                        min_value: r.min_value,
+                        max_value: r.max_value,
+                        price: r.price_hcm
+                    } as ShippingRateRule);
+                }
+            });
+
+            // Validate and Flat Bulky
+            value.bulky?.forEach((r: any) => {
+                const mkRule = (wh: 'HN' | 'HCM', price: number, id?: string) => ({
+                    id, method: 'ChinhNgach', type: 'volume_based', subtype: 'bulky', warehouse: wh,
+                    min_value: r.min_value, max_value: r.max_value, price
+                } as ShippingRateRule);
+
+                if (r.price_hn > 0 || r.id_hn) flattened.push(mkRule('HN', r.price_hn, r.id_hn));
+                if (r.price_hcm > 0 || r.id_hcm) flattened.push(mkRule('HCM', r.price_hcm, r.id_hcm));
+            });
+
+            onDataChange(flattened);
+        });
+        return () => subscription.unsubscribe();
+    }, [watch, onDataChange, mode]);
+
+    const { append: appendHeavy, remove: removeHeavy } = useFieldArray({ control, name: 'heavy' });
+    const { append: appendBulky, remove: removeBulky } = useFieldArray({ control, name: 'bulky' });
 
     return (
         <div className="w-full space-y-6 font-sans">
-            {/* SECTION HEADER */}
             <div className="flex items-center gap-2 mb-4">
                 <div className="h-8 w-1 bg-blue-600 rounded-full"></div>
                 <h2 className="text-2xl font-bold text-slate-800">Line Chính Ngạch</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* === CARD 1: HÀNG NẶNG (WEIGHT) === */}
-                <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                    {/* Card Header */}
-                    <div className="bg-slate-900 py-4 px-6 border-b border-slate-800">
-                        <h3 className="text-white font-bold text-lg text-center uppercase tracking-wide">
-                            Đối với Hàng Nặng
-                        </h3>
-                    </div>
-
-                    {/* Table Header */}
-                    <div className="grid grid-cols-3 bg-slate-50 border-b border-gray-200 text-sm font-semibold text-slate-700">
-                        <div className="py-3 px-4 text-left">Số lượng (kg)</div>
-                        <div className="py-3 px-4 text-center">Hà Nội</div>
-                        <div className="py-3 px-4 text-center">Hồ Chí Minh</div>
-                    </div>
-
-                    {/* Table Body */}
-                    <div className="divide-y divide-gray-100">
-                        {/* ROW 1 */}
-                        <div className="grid grid-cols-3 hover:bg-gray-50 transition-colors">
-                            <div className="py-4 px-4 text-sm font-medium text-slate-900">70kg - 500kg</div>
-                            <Cell type="weight_based" min={70} warehouse="HN" />
-                            <Cell type="weight_based" min={70} warehouse="HCM" />
-                        </div>
-                        {/* ROW 2 */}
-                        <div className="grid grid-cols-3 hover:bg-gray-50 transition-colors">
-                            <div className="py-4 px-4 text-sm font-medium text-slate-900">500kg - 1000kg</div>
-                            <Cell type="weight_based" min={500} warehouse="HN" />
-                            <Cell type="weight_based" min={500} warehouse="HCM" />
-                        </div>
-                        {/* ROW 3 */}
-                        <div className="grid grid-cols-3 hover:bg-gray-50 transition-colors">
-                            <div className="py-4 px-4 text-sm font-medium text-slate-900">Trên 1000kg</div>
-                            <Cell type="weight_based" min={1000} warehouse="HN" />
-                            <Cell type="weight_based" min={1000} warehouse="HCM" />
-                        </div>
-                        {/* ROW 4 */}
-                        <div className="grid grid-cols-3 hover:bg-gray-50 transition-colors">
-                            <div className="py-4 px-4 text-sm font-medium text-slate-900">Trên 2000kg</div>
-                            <Cell type="weight_based" min={2000} warehouse="HN" />
-                            <Cell type="weight_based" min={2000} warehouse="HCM" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* === CARD 2: HÀNG CỒNG KỀNH (VOLUME) === */}
-                <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                    {/* Card Header */}
-                    <div className="bg-slate-900 py-4 px-6 border-b border-slate-800">
-                        <h3 className="text-white font-bold text-lg text-center uppercase tracking-wide">
-                            Đối với Hàng Cồng Kềnh
-                        </h3>
-                    </div>
-
-                    {/* Table Header */}
-                    <div className="grid grid-cols-3 bg-slate-50 border-b border-gray-200 text-sm font-semibold text-slate-700">
-                        <div className="py-3 px-4 text-left">Số lượng (m³)</div>
-                        <div className="py-3 px-4 text-center">Hà Nội</div>
-                        <div className="py-3 px-4 text-center">Hồ Chí Minh</div>
-                    </div>
-
-                    {/* Table Body */}
-                    <div className="divide-y divide-gray-100">
-                        {/* ROW 1 */}
-                        <div className="grid grid-cols-3 hover:bg-gray-50 transition-colors">
-                            <div className="py-4 px-4 text-sm font-medium text-slate-900">Dưới 10m³</div>
-                            <Cell type="volume_based" min={0} warehouse="HN" />
-                            <Cell type="volume_based" min={0} warehouse="HCM" />
-                        </div>
-                        {/* ROW 2 */}
-                        <div className="grid grid-cols-3 hover:bg-gray-50 transition-colors">
-                            <div className="py-4 px-4 text-sm font-medium text-slate-900">Trên 10m³</div>
-                            <Cell type="volume_based" min={10} warehouse="HN" />
-                            <Cell type="volume_based" min={10} warehouse="HCM" />
-                        </div>
-                        {/* ROW 3 */}
-                        <div className="grid grid-cols-3 hover:bg-gray-50 transition-colors">
-                            <div className="py-4 px-4 text-sm font-medium text-slate-900">Trên 20m³</div>
-                            <Cell type="volume_based" min={20} warehouse="HN" />
-                            <Cell type="volume_based" min={20} warehouse="HCM" />
-                        </div>
-                        {/* ROW 4 */}
-                        <div className="grid grid-cols-3 hover:bg-gray-50 transition-colors">
-                            <div className="py-4 px-4 text-sm font-medium text-slate-900">Trên 20m³ (VIP)</div>
-                            <Cell type="volume_based" min={21} warehouse="HN" />
-                            <Cell type="volume_based" min={21} warehouse="HCM" />
-                        </div>
-                    </div>
-                </div>
+                <ShippingCard
+                    title="Đối với Hàng Nặng"
+                    control={control}
+                    name="heavy"
+                    mode={mode}
+                    suffix="kg"
+                    onRemove={removeHeavy}
+                    onAdd={() => appendHeavy({ min_value: 0, max_value: 0, price_hn: 0, price_hcm: 0 })}
+                />
+                <ShippingCard
+                    title="Đối với Hàng Cồng Kềnh"
+                    control={control}
+                    name="bulky"
+                    mode={mode}
+                    suffix="m³"
+                    onRemove={removeBulky}
+                    onAdd={() => appendBulky({ min_value: 0, max_value: 0, price_hn: 0, price_hcm: 0 })}
+                />
             </div>
 
             {/* === FOOTER NOTES === */}
@@ -174,12 +313,6 @@ export function OfficialShippingTable({ rules, mode = "view", onUpdate }: Offici
                     <span className="text-amber-500 font-bold">ℹ️</span>
                     <span>
                         <strong>Tổng chi phí bao gồm:</strong> Tiền hàng + Phí mua hàng (1%) + Ship nội địa TQ (nếu có) + Phí ủy thác (1%) + Thuế (VAT + Nhập khẩu nếu có) + Cước vận chuyển.
-                    </span>
-                </p>
-                <p className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">💡</span>
-                    <span>
-                        <strong>Phí ủy thác:</strong> Đối với invoice dưới 30tr mặc định thu ủy thác 300k/ 1 mục khai.
                     </span>
                 </p>
             </div>

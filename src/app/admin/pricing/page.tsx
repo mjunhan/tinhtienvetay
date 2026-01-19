@@ -87,17 +87,13 @@ export default function AdminPricingPage() {
         setHasChanges(true);
     }, []);
 
-    const handleOfficialUpdate = useCallback((id: string, field: string, value: number) => {
-        setOfficialShippingData(prev => prev.map(item =>
-            item.id === id ? { ...item, [field]: value } : item
-        ));
+    const handleOfficialUpdate = useCallback((newData: any[]) => {
+        setOfficialShippingData(newData);
         setHasChanges(true);
     }, []);
 
-    const handleServiceFeeUpdate = useCallback((id: string, field: string, value: number) => {
-        setServiceFeeData(prev => prev.map(item =>
-            item.id === id ? { ...item, [field]: value } : item
-        ));
+    const handleServiceFeeUpdate = useCallback((newData: any[]) => {
+        setServiceFeeData(newData);
         setHasChanges(true);
     }, []);
 
@@ -116,37 +112,84 @@ export default function AdminPricingPage() {
     // --- Batch Save Mutation ---
     const saveChangesMutation = useMutation({
         mutationFn: async () => {
-            const updates = [];
-
-            // 1. Normal Shipping
+            // 1. Normal Shipping (Updates Only for now as Table doesn't support add/remove yet)
+            const normalUpdates = [];
             for (const tier of normalShippingData) {
-                if (tier.hn_rule_id) updates.push(supabase.from('shipping_rate_rules').update({ price: tier.hn_actual }).eq('id', tier.hn_rule_id));
-                if (tier.hcm_rule_id) updates.push(supabase.from('shipping_rate_rules').update({ price: tier.hcm_actual }).eq('id', tier.hcm_rule_id));
-                if (tier.fee_rule_id) updates.push(supabase.from('service_fee_rules').update({ fee_percent: tier.fee_percent }).eq('id', tier.fee_rule_id));
+                if (tier.hn_rule_id) normalUpdates.push(supabase.from('shipping_rate_rules').update({ price: tier.hn_actual }).eq('id', tier.hn_rule_id));
+                if (tier.hcm_rule_id) normalUpdates.push(supabase.from('shipping_rate_rules').update({ price: tier.hcm_actual }).eq('id', tier.hcm_rule_id));
+                if (tier.fee_rule_id) normalUpdates.push(supabase.from('service_fee_rules').update({ fee_percent: tier.fee_percent }).eq('id', tier.fee_rule_id));
             }
+            if (normalUpdates.length > 0) await Promise.all(normalUpdates);
 
             // 2. TMDT Shipping
+            const tmdtUpdates = [];
             for (const tier of tmdtShippingData) {
-                if (tier.hn_rule_id) updates.push(supabase.from('shipping_rate_rules').update({ price: tier.hn_actual }).eq('id', tier.hn_rule_id));
-                if (tier.hcm_rule_id) updates.push(supabase.from('shipping_rate_rules').update({ price: tier.hcm_actual }).eq('id', tier.hcm_rule_id));
-                if (tier.fee_rule_id) updates.push(supabase.from('service_fee_rules').update({ fee_percent: tier.fee_percent }).eq('id', tier.fee_rule_id));
+                if (tier.hn_rule_id) tmdtUpdates.push(supabase.from('shipping_rate_rules').update({ price: tier.hn_actual }).eq('id', tier.hn_rule_id));
+                if (tier.hcm_rule_id) tmdtUpdates.push(supabase.from('shipping_rate_rules').update({ price: tier.hcm_actual }).eq('id', tier.hcm_rule_id));
+                if (tier.fee_rule_id) tmdtUpdates.push(supabase.from('service_fee_rules').update({ fee_percent: tier.fee_percent }).eq('id', tier.fee_rule_id));
+            }
+            if (tmdtUpdates.length > 0) await Promise.all(tmdtUpdates);
+
+            // 3. Official Shipping (Upsert & Delete)
+            if (officialShippingData.length > 0) {
+                // Upsert (Insert or Update)
+                const { error: upsertError } = await supabase
+                    .from('shipping_rate_rules')
+                    .upsert(officialShippingData.map(r => ({
+                        id: r.id, // If undefined, will auto-gen? No, UUID must be undefined to auto-gen or let Supabase handle it if logic matches. 
+                        // Actually Supabase upsert requires ID to match for update. If ID is missing, it inserts.
+                        method: 'ChinhNgach', // Safety
+                        type: r.type,
+                        subtype: r.subtype,
+                        warehouse: r.warehouse,
+                        min_value: r.min_value,
+                        max_value: r.max_value,
+                        price: r.price
+                    })).map(r => {
+                        // Remove undefined ID to allow auto-generation
+                        if (!r.id) delete r.id;
+                        return r;
+                    }));
+                if (upsertError) throw upsertError;
+
+                // Delete Missing IDs
+                // Current IDs in UI
+                const currentIds = officialShippingData.filter(r => r.id).map(r => r.id);
+                // Original IDs from DB
+                const originalIds = shippingRates?.filter(r => r.method === 'ChinhNgach').map(r => r.id) || [];
+                const idsToDelete = originalIds.filter(id => !currentIds.includes(id));
+
+                if (idsToDelete.length > 0) {
+                    await supabase.from('shipping_rate_rules').delete().in('id', idsToDelete);
+                }
             }
 
-            // 3. Official Shipping (Direct ID match)
-            // Optimization: Only update dirty rows? For simplicity we update all if local state changed, 
-            // but ideally we should track dirty IDs. For now, checking against current state is hard without deep diff.
-            // We just send update for all rows in the modified array for simplicity (small data set).
-            for (const rule of officialShippingData) {
-                updates.push(supabase.from('shipping_rate_rules').update({ price: rule.price }).eq('id', rule.id));
-            }
+            // 4. Service Fees (Upsert & Delete)
+            if (serviceFeeData.length > 0) {
+                // Upsert
+                const { error: upsertFeeError } = await supabase
+                    .from('service_fee_rules')
+                    .upsert(serviceFeeData.map(r => ({
+                        id: r.id,
+                        method: 'TieuNgach',
+                        min_order_value: r.min_order_value,
+                        max_order_value: r.max_order_value,
+                        deposit_percent: r.deposit_percent,
+                        fee_percent: r.fee_percent
+                    })).map(r => {
+                        if (!r.id) delete r.id;
+                        return r;
+                    }));
+                if (upsertFeeError) throw upsertFeeError;
 
-            // 4. Service Fees
-            for (const fee of serviceFeeData) {
-                updates.push(supabase.from('service_fee_rules').update({ fee_percent: fee.fee_percent }).eq('id', fee.id));
-            }
+                // Delete Missing
+                const currentFeeIds = serviceFeeData.filter(r => r.id).map(r => r.id);
+                const originalFeeIds = serviceFees?.map(r => r.id) || [];
+                const feesToDelete = originalFeeIds.filter(id => !currentFeeIds.includes(id));
 
-            if (updates.length > 0) {
-                await Promise.all(updates);
+                if (feesToDelete.length > 0) {
+                    await supabase.from('service_fee_rules').delete().in('id', feesToDelete);
+                }
             }
         },
         onSuccess: () => {
@@ -215,7 +258,7 @@ export default function AdminPricingPage() {
                     <GlobalServiceFeeTable
                         mode="edit"
                         data={serviceFeeData}
-                        onUpdate={handleServiceFeeUpdate}
+                        onDataChange={handleServiceFeeUpdate}
                     />
                 </div>
             )}
@@ -252,13 +295,13 @@ export default function AdminPricingPage() {
                                 <Info className="text-blue-600 flex-shrink-0 mt-1" size={20} />
                                 <div className="text-sm text-blue-800">
                                     <p className="font-semibold mb-1">Cấu hình Line Chính Ngạch</p>
-                                    <p>Sửa giá trực tiếp bằng cách click vào số tiền.</p>
+                                    <p>Sửa giá và các mốc cân nặng/thể tích trực tiếp.</p>
                                 </div>
                             </div>
                             <OfficialShippingTable
                                 rules={officialShippingData}
                                 mode="edit"
-                                onUpdate={handleOfficialUpdate}
+                                onDataChange={handleOfficialUpdate}
                             />
                         </div>
                     )}
