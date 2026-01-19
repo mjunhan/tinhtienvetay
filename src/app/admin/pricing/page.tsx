@@ -9,8 +9,7 @@ import { toast, Toaster } from 'sonner';
 import { DollarSign, Truck, Info } from 'lucide-react';
 import { ServiceFeeTable } from '@/components/admin/pricing/ServiceFeeTable'; // NEW
 import { OfficialLineTable } from '@/components/admin/pricing/OfficialLineTable'; // NEW
-import { NormalShippingTable } from '@/components/pricing/NormalShippingTable';
-import { TmdtShippingTable } from '@/components/pricing/TmdtShippingTable';
+import { AdminValueBasedTable } from '@/components/admin/pricing/AdminValueBasedTable'; // NEW
 import { PricingSaveBar } from '@/components/pricing/PricingSaveBar';
 import { DataSeeder } from '@/components/admin/pricing/DataSeeder'; // NEW
 
@@ -70,21 +69,13 @@ export default function AdminPricingPage() {
 
     // --- Update Handlers ---
 
-    const handleNormalUpdate = useCallback((index: number, field: string, value: number) => {
-        setNormalShippingData(prev => {
-            const newData = [...prev];
-            newData[index] = { ...newData[index], [field]: value };
-            return newData;
-        });
+    const handleNormalUpdate = useCallback((newData: any[]) => {
+        setNormalShippingData(newData);
         setHasChanges(true);
     }, []);
 
-    const handleTmdtUpdate = useCallback((index: number, field: string, value: number) => {
-        setTmdtShippingData(prev => {
-            const newData = [...prev];
-            newData[index] = { ...newData[index], [field]: value };
-            return newData;
-        });
+    const handleTmdtUpdate = useCallback((newData: any[]) => {
+        setTmdtShippingData(newData);
         setHasChanges(true);
     }, []);
 
@@ -116,23 +107,157 @@ export default function AdminPricingPage() {
     // --- Batch Save Mutation ---
     const saveChangesMutation = useMutation({
         mutationFn: async () => {
-            // 1. Normal Shipping (Updates Only for now as Table doesn't support add/remove yet)
-            const normalUpdates = [];
-            for (const tier of normalShippingData) {
-                if (tier.hn_rule_id) normalUpdates.push(supabase.from('shipping_rate_rules').update({ price: tier.hn_actual }).eq('id', tier.hn_rule_id));
-                if (tier.hcm_rule_id) normalUpdates.push(supabase.from('shipping_rate_rules').update({ price: tier.hcm_actual }).eq('id', tier.hcm_rule_id));
-                if (tier.fee_rule_id) normalUpdates.push(supabase.from('service_fee_rules').update({ fee_percent: tier.fee_percent }).eq('id', tier.fee_rule_id));
-            }
-            if (normalUpdates.length > 0) await Promise.all(normalUpdates);
+            // 1. Normal Shipping (TieuNgach) - Upsert & Delete
+            if (normalShippingData.length > 0 || pricing?.normal_shipping) {
+                // Upsert shipping rates
+                const normalShippingRules = [];
+                for (const tier of normalShippingData) {
+                    // HN Rule
+                    normalShippingRules.push({
+                        id: tier.hn_rule_id,
+                        method: 'TieuNgach',
+                        type: 'value_based',
+                        warehouse: 'HN',
+                        min_value: tier.min_value,
+                        max_value: tier.max_value,
+                        price: tier.hn_actual
+                    });
+                    // HCM Rule
+                    normalShippingRules.push({
+                        id: tier.hcm_rule_id,
+                        method: 'TieuNgach',
+                        type: 'value_based',
+                        warehouse: 'HCM',
+                        min_value: tier.min_value,
+                        max_value: tier.max_value,
+                        price: tier.hcm_actual
+                    });
+                }
 
-            // 2. TMDT Shipping
-            const tmdtUpdates = [];
-            for (const tier of tmdtShippingData) {
-                if (tier.hn_rule_id) tmdtUpdates.push(supabase.from('shipping_rate_rules').update({ price: tier.hn_actual }).eq('id', tier.hn_rule_id));
-                if (tier.hcm_rule_id) tmdtUpdates.push(supabase.from('shipping_rate_rules').update({ price: tier.hcm_actual }).eq('id', tier.hcm_rule_id));
-                if (tier.fee_rule_id) tmdtUpdates.push(supabase.from('service_fee_rules').update({ fee_percent: tier.fee_percent }).eq('id', tier.fee_rule_id));
+                if (normalShippingRules.length > 0) {
+                    const { error: normalUpsertError } = await supabase
+                        .from('shipping_rate_rules')
+                        .upsert(normalShippingRules.map(r => {
+                            if (!r.id) {
+                                const { id, ...rest } = r;
+                                return rest;
+                            }
+                            return r;
+                        }));
+                    if (normalUpsertError) throw normalUpsertError;
+                }
+
+                // Upsert service fees
+                const normalServiceFees = [];
+                for (const tier of normalShippingData) {
+                    if (tier.fee_percent !== undefined) {
+                        normalServiceFees.push({
+                            id: tier.fee_rule_id,
+                            method: 'TieuNgach',
+                            min_order_value: tier.min_value,
+                            max_order_value: tier.max_value,
+                            deposit_percent: 70, // Default
+                            fee_percent: tier.fee_percent
+                        });
+                    }
+                }
+
+                if (normalServiceFees.length > 0) {
+                    const { error: feeUpsertError } = await supabase
+                        .from('service_fee_rules')
+                        .upsert(normalServiceFees.map(r => {
+                            if (!r.id) {
+                                const { id, ...rest } = r;
+                                return rest;
+                            }
+                            return r;
+                        }));
+                    if (feeUpsertError) throw feeUpsertError;
+                }
+
+                // Delete missing shipping rates
+                const currentNormalShippingIds = normalShippingData
+                    .flatMap(t => [t.hn_rule_id, t.hcm_rule_id])
+                    .filter(Boolean);
+                const originalNormalShippingIds = pricing?.normal_shipping
+                    ?.flatMap((t: any) => [t.hn_rule_id, t.hcm_rule_id])
+                    .filter(Boolean) || [];
+                const normalShippingIdsToDelete = originalNormalShippingIds
+                    .filter(id => !currentNormalShippingIds.includes(id));
+
+                if (normalShippingIdsToDelete.length > 0) {
+                    await supabase.from('shipping_rate_rules').delete().in('id', normalShippingIdsToDelete);
+                }
+
+                // Delete missing service fees
+                const currentNormalFeeIds = normalShippingData
+                    .map(t => t.fee_rule_id)
+                    .filter(Boolean);
+                const originalNormalFeeIds = pricing?.normal_shipping
+                    ?.map((t: any) => t.fee_rule_id)
+                    .filter(Boolean) || [];
+                const normalFeeIdsToDelete = originalNormalFeeIds
+                    .filter(id => !currentNormalFeeIds.includes(id));
+
+                if (normalFeeIdsToDelete.length > 0) {
+                    await supabase.from('service_fee_rules').delete().in('id', normalFeeIdsToDelete);
+                }
             }
-            if (tmdtUpdates.length > 0) await Promise.all(tmdtUpdates);
+
+            // 2. TMDT Shipping - Upsert & Delete
+            if (tmdtShippingData.length > 0 || pricing?.tmdt_shipping) {
+                // Upsert shipping rates
+                const tmdtShippingRules = [];
+                for (const tier of tmdtShippingData) {
+                    // HN Rule
+                    tmdtShippingRules.push({
+                        id: tier.hn_rule_id,
+                        method: 'TMDT',
+                        type: 'value_based',
+                        warehouse: 'HN',
+                        min_value: tier.min_value,
+                        max_value: tier.max_value,
+                        price: tier.hn_actual
+                    });
+                    // HCM Rule
+                    tmdtShippingRules.push({
+                        id: tier.hcm_rule_id,
+                        method: 'TMDT',
+                        type: 'value_based',
+                        warehouse: 'HCM',
+                        min_value: tier.min_value,
+                        max_value: tier.max_value,
+                        price: tier.hcm_actual
+                    });
+                }
+
+                if (tmdtShippingRules.length > 0) {
+                    const { error: tmdtUpsertError } = await supabase
+                        .from('shipping_rate_rules')
+                        .upsert(tmdtShippingRules.map(r => {
+                            if (!r.id) {
+                                const { id, ...rest } = r;
+                                return rest;
+                            }
+                            return r;
+                        }));
+                    if (tmdtUpsertError) throw tmdtUpsertError;
+                }
+
+                // Delete missing shipping rates
+                const currentTmdtShippingIds = tmdtShippingData
+                    .flatMap(t => [t.hn_rule_id, t.hcm_rule_id])
+                    .filter(Boolean);
+                const originalTmdtShippingIds = pricing?.tmdt_shipping
+                    ?.flatMap((t: any) => [t.hn_rule_id, t.hcm_rule_id])
+                    .filter(Boolean) || [];
+                const tmdtShippingIdsToDelete = originalTmdtShippingIds
+                    .filter(id => !currentTmdtShippingIds.includes(id));
+
+                if (tmdtShippingIdsToDelete.length > 0) {
+                    await supabase.from('shipping_rate_rules').delete().in('id', tmdtShippingIdsToDelete);
+                }
+            }
 
             // 3. Official Shipping (Upsert & Delete)
             if (officialShippingData.length > 0 || shippingRates && shippingRates.length > 0) {
@@ -330,11 +455,13 @@ export default function AdminPricingPage() {
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-2xl font-bold text-slate-800">Vận Chuyển Thường (Tiểu Ngạch)</h2>
                                 </div>
-                                <NormalShippingTable
+                                <AdminValueBasedTable
                                     key={resetKey}
                                     data={normalShippingData}
-                                    mode="edit"
-                                    onUpdate={handleNormalUpdate}
+                                    onDataChange={handleNormalUpdate}
+                                    showFeeColumn={true}
+                                    title="Vận Chuyển Thường"
+                                    color="green"
                                 />
                             </div>
 
@@ -343,11 +470,13 @@ export default function AdminPricingPage() {
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-2xl font-bold text-slate-800">Line Thương Mại Điện Tử</h2>
                                 </div>
-                                <TmdtShippingTable
+                                <AdminValueBasedTable
                                     key={resetKey}
                                     data={tmdtShippingData}
-                                    mode="edit"
-                                    onUpdate={handleTmdtUpdate}
+                                    onDataChange={handleTmdtUpdate}
+                                    showFeeColumn={false}
+                                    title="Line TMĐT"
+                                    color="red"
                                 />
                             </div>
                         </div>
