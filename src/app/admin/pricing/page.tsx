@@ -202,9 +202,19 @@ export default function AdminPricingPage() {
         },
         onError: (error) => {
             console.error('Save failed:', error);
+            // We can also trigger the toast here if we want global visibility
             toast.error('Lỗi khi lưu thay đổi: ' + error.message);
         }
     });
+
+    const handleSave = async () => {
+        try {
+            await saveChangesMutation.mutateAsync();
+        } catch (error) {
+            // Error is already handled in onError, but we catch it here to prevent unhandled promise rejection crashes
+            console.error("Save transaction failed (caught in handleSave):", error);
+        }
+    };
 
     if (isLoading || isLoadingPricing || isLoadingFees || isLoadingRates) {
         return (
@@ -345,7 +355,7 @@ export default function AdminPricingPage() {
             <PricingSaveBar
                 hasChanges={hasChanges}
                 isLoading={saveChangesMutation.isPending}
-                onSave={() => saveChangesMutation.mutate()}
+                onSave={handleSave}
                 onReset={handleReset}
             />
 
