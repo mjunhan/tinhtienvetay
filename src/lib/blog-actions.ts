@@ -175,9 +175,9 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     if (error) {
         console.error("Error creating post:", error);
         if (error.code === "23505") {
-            throw new Error("A post with this slug already exists");
+            throw new Error("Một bài viết với đường dẫn (slug) này đã tồn tại. Vui lòng chọn slug khác.");
         }
-        throw new Error("Failed to create post");
+        throw new Error(error.message || "Không thể tạo bài viết");
     }
 
     // 2. Handle Tags
@@ -235,9 +235,9 @@ export async function updatePost(input: UpdatePostInput): Promise<Post> {
     if (error) {
         console.error("Error updating post:", error);
         if (error.code === "23505") {
-            throw new Error("A post with this slug already exists");
+            throw new Error("Một bài viết với đường dẫn (slug) này đã tồn tại.");
         }
-        throw new Error("Failed to update post");
+        throw new Error(error.message || "Không thể cập nhật bài viết");
     }
 
     // Handle Tags Update if provided

@@ -2,9 +2,13 @@ import { ShippingRateRule } from "@/types/database.types";
 
 interface OfficialShippingTableProps {
     rules: ShippingRateRule[];
+    mode?: "view" | "edit";
 }
 
-export const OfficialShippingTable = ({ rules }: OfficialShippingTableProps) => {
+export function OfficialShippingTable({ rules, mode = "view" }: OfficialShippingTableProps) {
+    const formatMoney = (value: number) => {
+        return new Intl.NumberFormat('vi-VN').format(value);
+    };
     // Helper to find price dynamically from props
     const findPrice = (
         type: 'weight_based' | 'volume_based',

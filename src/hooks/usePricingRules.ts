@@ -83,15 +83,17 @@ export function usePricingRules() {
                             hn_converted: rule.warehouse === 'HN' ? rule.price : 0,
                             hcm_actual: rule.warehouse === 'HCM' ? rule.price : 0,
                             hcm_converted: rule.warehouse === 'HCM' ? rule.price : 0,
+                            hn_rule_id: rule.warehouse === 'HN' ? rule.id : undefined,
+                            hcm_rule_id: rule.warehouse === 'HCM' ? rule.id : undefined,
                         });
                     }
 
                     return acc;
-                }, [] as PricingConfig['normal_shipping']);
+                }, [] as any[]);
 
             // Add service fees to normal_shipping tiers (use 70% deposit as default)
             const serviceFeesTyped = serviceFees as ServiceFeeRule[] || [];
-            normalShipping.forEach((tier) => {
+            normalShipping.forEach((tier: any) => {
                 const matchingFee = serviceFeesTyped.find(
                     (sf) =>
                         sf.method === 'TieuNgach' &&
@@ -101,6 +103,7 @@ export function usePricingRules() {
                 );
                 if (matchingFee) {
                     tier.fee_percent = matchingFee.fee_percent;
+                    tier.fee_rule_id = matchingFee.id;
                 }
             });
 
@@ -127,14 +130,16 @@ export function usePricingRules() {
                             fee_percent: 0,
                             hn_actual: rule.warehouse === 'HN' ? rule.price : 0,
                             hcm_actual: rule.warehouse === 'HCM' ? rule.price : 0,
+                            hn_rule_id: rule.warehouse === 'HN' ? rule.id : undefined,
+                            hcm_rule_id: rule.warehouse === 'HCM' ? rule.id : undefined,
                         });
                     }
 
                     return acc;
-                }, [] as PricingConfig['tmdt_shipping']);
+                }, [] as any[]); // Using any for temp flexibility, should be PricingConfig['tmdt_shipping'] enhanced
 
             // Add service fees to TMDT tiers
-            tmdtShipping.forEach((tier) => {
+            tmdtShipping.forEach((tier: any) => {
                 const matchingFee = serviceFeesTyped.find(
                     (sf) =>
                         sf.method === 'TMDT' &&
@@ -144,6 +149,7 @@ export function usePricingRules() {
                 );
                 if (matchingFee) {
                     tier.fee_percent = matchingFee.fee_percent;
+                    tier.fee_rule_id = matchingFee.id;
                 }
             });
 

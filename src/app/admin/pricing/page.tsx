@@ -1,49 +1,54 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { useServiceFeeRules, useShippingRateRules } from '@/hooks/usePricingRules';
-import { useMutation } from '@tanstack/react-query';
+import { usePricingRules, useServiceFeeRules, useShippingRateRules } from '@/hooks/usePricingRules';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast, Toaster } from 'sonner';
-import { DollarSign, Truck, Info, Pencil } from 'lucide-react';
+import { DollarSign, Truck, Info, Pencil, Save, RefreshCw } from 'lucide-react';
 import { EditServiceFeeDialog } from '@/components/admin/pricing/EditServiceFeeDialog';
 import { EditShippingRateDialog } from '@/components/admin/pricing/EditShippingRateDialog';
-import { AdminPricingTable } from '@/components/admin/pricing/AdminPricingTable';
 import type { ServiceFeeRule, ShippingRateRule } from '@/types/database.types';
+import { GlobalServiceFeeTable } from '@/components/pricing/GlobalServiceFeeTable';
+import { OfficialShippingTable } from '@/components/pricing/OfficialShippingTable';
+import { NormalShippingTable } from '@/components/pricing/NormalShippingTable';
+import { TmdtShippingTable } from '@/components/pricing/TmdtShippingTable';
 
 export default function AdminPricingPage() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'service' | 'shipping'>('service');
     const [shippingSubTab, setShippingSubTab] = useState<'official' | 'other'>('official');
 
-    // Dialog states
+    // Dialog states (Still used for Official and Service Fees if needed, or we might deprecate)
+    // For now we keep Service Fees editable via Dialog as they are complex to edit inline in the current GlobalTable component
     const [editingServiceFee, setEditingServiceFee] = useState<ServiceFeeRule | null>(null);
     const [editingShippingRate, setEditingShippingRate] = useState<ShippingRateRule | null>(null);
-    // Helper state for creating new rule with defaults
-    const [createTemplate, setCreateTemplate] = useState<Partial<ShippingRateRule>>({});
 
-    const { data: serviceFees, isLoading: isLoadingFees, refetch: refetchFees } = useServiceFeeRules();
-    const { data: shippingRates, isLoading: isLoadingRates, refetch: refetchRates } = useShippingRateRules();
+    // Data Hooks
+    const { data: pricing, isLoading: isLoadingPricing, refetch: refetchPricing } = usePricingRules();
+    const { data: serviceFees, isLoading: isLoadingFees } = useServiceFeeRules();
+    const { data: shippingRates, isLoading: isLoadingRates } = useShippingRateRules();
 
-    // Delete mutation
-    const deleteMutation = useMutation({
-        mutationFn: async (id: string) => {
-            const { error } = await supabase
-                .from('shipping_rate_rules')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
-        },
-        onSuccess: () => {
-            toast.success('Đã xóa thành công');
-            refetchRates();
-        },
-        onError: () => {
-            toast.error('Lỗi khi xóa');
+    // Local State for Batch Editing (Normal & TMDT)
+    const [normalShippingData, setNormalShippingData] = useState<any[]>([]);
+    const [tmdtShippingData, setTmdtShippingData] = useState<any[]>([]);
+    const [hasChanges, setHasChanges] = useState(false);
+
+    // Sync local state with fetched data
+    useEffect(() => {
+        if (pricing?.normal_shipping) {
+            setNormalShippingData(JSON.parse(JSON.stringify(pricing.normal_shipping)));
         }
-    });
+    }, [pricing?.normal_shipping]);
+
+    useEffect(() => {
+        if (pricing?.tmdt_shipping) {
+            setTmdtShippingData(JSON.parse(JSON.stringify(pricing.tmdt_shipping)));
+        }
+    }, [pricing?.tmdt_shipping]);
 
     // Verify auth
     useEffect(() => {
@@ -58,11 +63,89 @@ export default function AdminPricingPage() {
         checkAuth();
     }, [router]);
 
-    const formatMoney = (value: number) => {
-        return new Intl.NumberFormat('vi-VN').format(value);
-    };
+    // Update Handlers
+    const handleNormalUpdate = useCallback((index: number, field: string, value: number) => {
+        setNormalShippingData(prev => {
+            const newData = [...prev];
+            newData[index] = { ...newData[index], [field]: value };
+            return newData;
+        });
+        setHasChanges(true);
+    }, []);
 
-    if (isLoading || isLoadingFees || isLoadingRates) {
+    const handleTmdtUpdate = useCallback((index: number, field: string, value: number) => {
+        setTmdtShippingData(prev => {
+            const newData = [...prev];
+            newData[index] = { ...newData[index], [field]: value };
+            return newData;
+        });
+        setHasChanges(true);
+    }, []);
+
+    // Batch Save Mutation
+    const saveChangesMutation = useMutation({
+        mutationFn: async () => {
+            const updates = [];
+
+            // Process Normal Shipping Updates
+            for (const tier of normalShippingData) {
+                // Update HN Rule
+                if (tier.hn_rule_id) {
+                    updates.push(
+                        supabase.from('shipping_rate_rules').update({ price: tier.hn_actual }).eq('id', tier.hn_rule_id)
+                    );
+                }
+                // Update HCM Rule
+                if (tier.hcm_rule_id) {
+                    updates.push(
+                        supabase.from('shipping_rate_rules').update({ price: tier.hcm_actual }).eq('id', tier.hcm_rule_id)
+                    );
+                }
+                // Update Service Fee Rule
+                if (tier.fee_rule_id) {
+                    updates.push(
+                        supabase.from('service_fee_rules').update({ fee_percent: tier.fee_percent }).eq('id', tier.fee_rule_id)
+                    );
+                }
+            }
+
+            // Process TMDT Shipping Updates
+            for (const tier of tmdtShippingData) {
+                if (tier.hn_rule_id) {
+                    updates.push(
+                        supabase.from('shipping_rate_rules').update({ price: tier.hn_actual }).eq('id', tier.hn_rule_id)
+                    );
+                }
+                if (tier.hcm_rule_id) {
+                    updates.push(
+                        supabase.from('shipping_rate_rules').update({ price: tier.hcm_actual }).eq('id', tier.hcm_rule_id)
+                    );
+                }
+                if (tier.fee_rule_id) {
+                    updates.push(
+                        supabase.from('service_fee_rules').update({ fee_percent: tier.fee_percent }).eq('id', tier.fee_rule_id)
+                    );
+                }
+            }
+
+            if (updates.length > 0) {
+                await Promise.all(updates);
+            }
+        },
+        onSuccess: () => {
+            toast.success('Đã lưu thay đổi thành công!');
+            setHasChanges(false);
+            queryClient.invalidateQueries({ queryKey: ['pricing'] });
+            queryClient.invalidateQueries({ queryKey: ['shipping-rates'] });
+            queryClient.invalidateQueries({ queryKey: ['service-fees'] });
+        },
+        onError: (error) => {
+            console.error('Save failed:', error);
+            toast.error('Lỗi khi lưu thay đổi: ' + error.message);
+        }
+    });
+
+    if (isLoading || isLoadingPricing) {
         return (
             <div className="flex items-center justify-center h-screen">
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -70,153 +153,12 @@ export default function AdminPricingPage() {
         );
     }
 
-    // --- COLUMNS DEFINITIONS ---
-
-    // 1. Tieu Ngach Checks
-    const tieuNgachColumns = [
-        {
-            header: "Mức cân (kg)",
-            accessor: (r: ShippingRateRule) => <span className="font-medium text-slate-900">{r.min_value} - {r.max_value === 999999999 ? 'Trở lên' : r.max_value} kg</span>
-        },
-        {
-            header: "Kho",
-            accessor: (r: ShippingRateRule) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${r.warehouse === 'HN' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
-                    {r.warehouse}
-                </span>
-            )
-        },
-        {
-            header: "Giá cước (VNĐ)",
-            accessor: (r: ShippingRateRule) => <span className="font-bold text-red-600">{formatMoney(r.price)}</span>,
-            className: "text-center"
-        }
-    ];
-
-    // 2. TMDT Checks
-    const tmdtColumns = [
-        {
-            header: "Giá trị đơn (VNĐ)",
-            accessor: (r: ShippingRateRule) => <span className="font-medium text-slate-900">{formatMoney(r.min_value)} - {r.max_value === 999999999 ? 'Trở lên' : formatMoney(r.max_value)}</span>
-        },
-        {
-            header: "Kho",
-            accessor: (r: ShippingRateRule) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${r.warehouse === 'HN' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
-                    {r.warehouse}
-                </span>
-            )
-        },
-        {
-            header: "Đơn giá",
-            accessor: (r: ShippingRateRule) => <span className="font-bold text-red-600">{formatMoney(r.price)}</span>,
-            className: "text-center"
-        }
-    ];
-
-    // 3. Chinh Ngach Checks
-    const chinhNgachColumns = [
-        {
-            header: "Mức lượng",
-            accessor: (r: ShippingRateRule) => <span className="font-medium text-slate-900">{r.min_value} - {r.max_value === 999999999 ? 'Trở lên' : r.max_value} {r.type === 'volume_based' ? 'm³' : 'kg'}</span>
-        },
-        {
-            header: "Kho",
-            accessor: (r: ShippingRateRule) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${r.warehouse === 'HN' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
-                    {r.warehouse}
-                </span>
-            )
-        },
-        {
-            header: "Đơn giá",
-            accessor: (r: ShippingRateRule) => <span className="font-bold text-red-600">{formatMoney(r.price)}</span>,
-            className: "text-center"
-        }
-    ];
-
-    // Handlers
-    const handleEdit = (rule: ShippingRateRule) => setEditingShippingRate(rule);
-    const handleDelete = (id: string) => deleteMutation.mutate(id);
-    const handleCreate = (method: 'TieuNgach' | 'TMDT' | 'ChinhNgach', type: 'weight_based' | 'value_based' | 'volume_based' = 'weight_based', warehouse: 'HN' | 'HCM' = 'HN', subtype: 'heavy' | 'bulky' | null = null) => {
-        // Prepare template for new rule
-        const template: Partial<ShippingRateRule> = {
-            method,
-            type,
-            warehouse,
-            subtype,
-            min_value: 0,
-            max_value: 999999999,
-            price: 0
-        };
-        // We set editingShippingRate with a partial object that mimics a new rule (no id)
-        // But the dialog expects ShippingRateRule (with id). 
-        // We can pass a "fake" object with empty id to signal creation mode.
-        setEditingShippingRate({ ...template, id: '' } as ShippingRateRule);
-    };
-
-
-    const renderServiceFeeTable = (method: string, title: string, gradientClass: string, colorClass: string) => {
-        const fees = serviceFees?.filter(sf => sf.method === method).sort((a, b) => a.min_order_value - b.min_order_value) || [];
-
-        return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className={`${gradientClass} px-6 py-4`}>
-                    <h2 className="text-xl font-bold text-white">{title}</h2>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Từ (VND)</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đến (VND)</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đặt cọc</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phí %</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {fees.map((fee) => (
-                                <tr key={fee.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm">{formatMoney(fee.min_order_value)}₫</td>
-                                    <td className="px-6 py-4 text-sm">{formatMoney(fee.max_order_value)}₫</td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${fee.deposit_percent === 70
-                                            ? 'bg-orange-100 text-orange-800'
-                                            : 'bg-green-100 text-green-800'
-                                            }`}>
-                                            {fee.deposit_percent}%
-                                        </span>
-                                    </td>
-                                    <td className={`px-6 py-4 text-sm font-semibold ${colorClass}`}>
-                                        {method === 'ChinhNgach' && fee.fee_percent === 0
-                                            ? '300,000₫ cố định'
-                                            : `${fee.fee_percent}%`}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <button
-                                            onClick={() => setEditingServiceFee(fee)}
-                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                            title="Chỉnh sửa"
-                                        >
-                                            <Pencil size={16} className="text-gray-600" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        );
-    };
-
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20"> {/* pb-20 for floating button */}
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-gray-900">Quản lý giá</h1>
-                <p className="text-gray-600 mt-2">Chỉnh sửa phí dịch vụ và phí vận chuyển</p>
+                <p className="text-gray-600 mt-2">Chỉnh sửa bảng giá hiển thị công khai</p>
             </div>
 
             {/* Tabs */}
@@ -246,32 +188,21 @@ export default function AdminPricingPage() {
             {/* Service Fees Tab */}
             {activeTab === 'service' && (
                 <div className="space-y-6">
-                    {/* Info Banner */}
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
                         <Info className="text-blue-600 flex-shrink-0 mt-1" size={20} />
                         <div className="text-sm text-blue-800">
                             <p className="font-semibold mb-1">Phí dịch vụ</p>
-                            <p>Phí % dựa trên giá trị đơn hàng và mức đặt cọc (70% hoặc 80%)</p>
+                            <p>Hiển thị bảng phí dịch vụ toàn cục. (Hiện tại chỉ hiển thị, chưa hỗ trợ sửa trực tiếp tại đây).</p>
                         </div>
                     </div>
-
-                    {renderServiceFeeTable('TMDT', 'TMDT', 'bg-gradient-to-r from-blue-600 to-purple-600', 'text-blue-600')}
-                    {renderServiceFeeTable('TieuNgach', 'Tiểu Ngạch', 'bg-gradient-to-r from-green-600 to-teal-600', 'text-green-600')}
-                    {renderServiceFeeTable('ChinhNgach', 'Chính Ngạch', 'bg-gradient-to-r from-purple-600 to-pink-600', 'text-purple-600')}
+                    {/* Using Shared Component */}
+                    <GlobalServiceFeeTable mode="view" />
                 </div>
             )}
 
             {/* Shipping Rates Tab */}
             {activeTab === 'shipping' && (
                 <div className="space-y-6">
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
-                        <Info className="text-blue-600 flex-shrink-0 mt-1" size={20} />
-                        <div className="text-sm text-blue-800">
-                            <p className="font-semibold mb-1">Phí vận chuyển quốc tế</p>
-                            <p>Phí theo trọng lượng (kg) hoặc giá trị đơn hàng, tùy phương thức vận chuyển</p>
-                        </div>
-                    </div>
-
                     {/* Sub-tabs for shipping */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex gap-2">
                         <button
@@ -297,70 +228,74 @@ export default function AdminPricingPage() {
                     {/* Official Line (Chính Ngạch) */}
                     {shippingSubTab === 'official' && (
                         <div className="space-y-8">
-                            <AdminPricingTable
-                                title="Chính Ngạch - Hàng Nặng (Kg)"
-                                rules={shippingRates?.filter(r => r.method === 'ChinhNgach' && r.type === 'weight_based') || []}
-                                columns={chinhNgachColumns}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                onCreate={() => handleCreate('ChinhNgach', 'weight_based')}
-                            />
-
-                            <AdminPricingTable
-                                title="Chính Ngạch - Hàng Cồng Kềnh (m³)"
-                                rules={shippingRates?.filter(r => r.method === 'ChinhNgach' && r.type === 'volume_based') || []}
-                                columns={chinhNgachColumns}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                onCreate={() => handleCreate('ChinhNgach', 'volume_based')}
-                            />
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
+                                <Info className="text-blue-600 flex-shrink-0 mt-1" size={20} />
+                                <div className="text-sm text-blue-800">
+                                    <p className="font-semibold mb-1">Cấu hình Line Chính Ngạch</p>
+                                    <p>Giá được hiển thị dựa trên cấu hình "Cân nặng" hoặc "Thể tích". Để sửa, vui lòng sử dụng tính năng "Sửa nhanh" (Coming Soon) hoặc liên hệ dev.</p>
+                                </div>
+                            </div>
+                            <OfficialShippingTable rules={shippingRates || []} mode="view" />
                         </div>
                     )}
 
                     {/* Other shipping methods (TMDT, Tiểu Ngạch) */}
                     {shippingSubTab === 'other' && (
-                        <div className="space-y-8">
-                            <AdminPricingTable
-                                title="Vận Chuyển Thường (Tiểu Ngạch)"
-                                rules={shippingRates?.filter(r => r.method === 'TieuNgach') || []}
-                                columns={tieuNgachColumns}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                onCreate={() => handleCreate('TieuNgach', 'weight_based')} // Assuming Weight based per prompt
-                            />
+                        <div className="space-y-12">
+                            {/* Normal Shipping */}
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-2xl font-bold text-slate-800">Vận Chuyển Thường (Tiểu Ngạch)</h2>
+                                    {hasChanges && <span className="text-amber-600 font-semibold animate-pulse">Có thay đổi chưa lưu...</span>}
+                                </div>
+                                <NormalShippingTable
+                                    data={normalShippingData}
+                                    mode="edit"
+                                    onUpdate={handleNormalUpdate}
+                                />
+                            </div>
 
-                            <AdminPricingTable
-                                title="Line TMĐT"
-                                rules={shippingRates?.filter(r => r.method === 'TMDT') || []}
-                                columns={tmdtColumns}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                onCreate={() => handleCreate('TMDT', 'value_based')} // Assuming Value based usually
-                            />
+                            {/* TMDT Shipping */}
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-2xl font-bold text-slate-800">Line Thương Mại Điện Tử</h2>
+                                    {hasChanges && <span className="text-amber-600 font-semibold animate-pulse">Có thay đổi chưa lưu...</span>}
+                                </div>
+                                <TmdtShippingTable
+                                    data={tmdtShippingData}
+                                    mode="edit"
+                                    onUpdate={handleTmdtUpdate}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>
             )}
 
-            {/* Edit Rule Dialog */}
-            {editingShippingRate && (
-                <EditShippingRateDialog
-                    open={true}
-                    onClose={() => setEditingShippingRate(null)}
-                    shippingRate={editingShippingRate}
-                />
+            {/* Floating Save Button */}
+            {hasChanges && (
+                <div className="fixed bottom-8 right-8 z-50 animate-bounce">
+                    <button
+                        onClick={() => saveChangesMutation.mutate()}
+                        disabled={saveChangesMutation.isPending}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-full shadow-2xl hover:bg-blue-700 font-bold text-lg disabled:opacity-50"
+                    >
+                        {saveChangesMutation.isPending ? (
+                            <>
+                                <RefreshCw className="w-6 h-6 animate-spin" />
+                                Đang lưu...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="w-6 h-6" />
+                                Lưu Thay Đổi
+                            </>
+                        )}
+                    </button>
+                </div>
             )}
 
-            {/* Edit Service Fee Dialog (Unchanged logic) */}
-            {editingServiceFee && (
-                <EditServiceFeeDialog
-                    open={true}
-                    onClose={() => setEditingServiceFee(null)}
-                    serviceFee={editingServiceFee}
-                />
-            )}
-
-            <Toaster position="top-center" />
+            <Toaster position="top-right" />
         </div>
     );
 }

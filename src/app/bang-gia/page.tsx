@@ -7,6 +7,39 @@ import { motion } from 'framer-motion';
 import { fadeIn } from '@/components/ui/motion-primitives';
 import { GlobalServiceFeeTable } from '@/components/pricing/GlobalServiceFeeTable';
 import { OfficialShippingTable } from '@/components/pricing/OfficialShippingTable';
+import { NormalShippingTable } from '@/components/pricing/NormalShippingTable';
+import { TmdtShippingTable } from '@/components/pricing/TmdtShippingTable';
+
+// Hardcoded data for Normal Shipping to ensure stability on public page
+const HARDCODED_NORMAL_RATES = [
+    {
+        min_value: 0,
+        max_value: 2000000,
+        fee_percent: 3,
+        hn_actual: 19000,
+        hn_converted: 21000,
+        hcm_actual: 24000,
+        hcm_converted: 26000
+    },
+    {
+        min_value: 2000000,
+        max_value: 5000000,
+        fee_percent: 1.5,
+        hn_actual: 14000,
+        hn_converted: 16000,
+        hcm_actual: 19000,
+        hcm_converted: 21000
+    },
+    {
+        min_value: 5000000,
+        max_value: 99999999999, // Arbitrary large number
+        fee_percent: 1.2,
+        hn_actual: 8000,
+        hn_converted: 10000,
+        hcm_actual: 12000,
+        hcm_converted: 14000
+    }
+];
 
 export default function BangGiaPage() {
     const { data: pricing, isLoading, error } = usePricingRules();
@@ -136,78 +169,7 @@ export default function BangGiaPage() {
                         <span className="hidden md:inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-bold">80% khách hàng chọn</span>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-slate-900 text-white">
-                                    <tr>
-                                        <th className="py-4 px-6 text-left border-r border-slate-700" rowSpan={2}>Tiền hàng/Shop</th>
-                                        <th className="py-4 px-6 text-center border-r border-slate-700" rowSpan={2}>
-                                            Phí mua hàng<br />
-                                            <span className="text-xs font-normal opacity-80">(Cọc 80%)</span>
-                                        </th>
-                                        <th className="py-2 px-4 text-center border-b border-slate-700 border-r border-slate-700" colSpan={2}>Hà Nội</th>
-                                        <th className="py-2 px-4 text-center border-b border-slate-700" colSpan={2}>Hồ Chí Minh</th>
-                                    </tr>
-                                    <tr>
-                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium border-r border-slate-700">Cân thực</th>
-                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium border-r border-slate-700">Cân quy đổi</th>
-                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium border-r border-slate-700">Cân thực</th>
-                                        <th className="py-2 px-4 text-center bg-slate-800 font-medium">Cân quy đổi</th>
-                                    </tr>
-                                </thead>
-                                <motion.tbody
-                                    className="divide-y divide-slate-100"
-                                    variants={{
-                                        hidden: { opacity: 0 },
-                                        show: { opacity: 1, transition: { staggerChildren: 0.05 } }
-                                    }}
-                                    initial="hidden"
-                                    whileInView="show"
-                                    viewport={{ once: true }}
-                                >
-                                    {/* Row 1: 0 - 2 triệu */}
-                                    <motion.tr className="bg-white hover:bg-green-50 transition-colors">
-                                        <td className="py-4 px-6 font-medium text-slate-900">0 - 2 triệu</td>
-                                        <td className="py-4 px-6 text-center border-l border-slate-100">
-                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">3%</span>
-                                        </td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">19.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">21.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">24.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">26.000</td>
-                                    </motion.tr>
-
-                                    {/* Row 2: 2 - 5 triệu */}
-                                    <motion.tr className="bg-slate-50 hover:bg-green-50 transition-colors">
-                                        <td className="py-4 px-6 font-medium text-slate-900">2 - 5 triệu</td>
-                                        <td className="py-4 px-6 text-center border-l border-slate-100">
-                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">1.5%</span>
-                                        </td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">14.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">16.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">19.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">21.000</td>
-                                    </motion.tr>
-
-                                    {/* Row 3: > 5 triệu */}
-                                    <motion.tr className="bg-white hover:bg-green-50 transition-colors">
-                                        <td className="py-4 px-6 font-medium text-slate-900">{'>'} 5 triệu</td>
-                                        <td className="py-4 px-6 text-center border-l border-slate-100">
-                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm">1.2%</span>
-                                        </td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">8.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">10.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">12.000</td>
-                                        <td className="py-4 px-6 text-center font-bold text-slate-900 border-l border-slate-100">14.000</td>
-                                    </motion.tr>
-                                </motion.tbody>
-                            </table>
-                        </div>
-                        <div className="bg-slate-50 p-3 text-center text-xs text-slate-500 border-t border-slate-200">
-                            Hàng cồng kềnh tính theo công thức: (Dài x Rộng x Cao) / 6000
-                        </div>
-                    </div>
+                    <NormalShippingTable data={HARDCODED_NORMAL_RATES} />
                 </motion.div>
 
                 {/* SECTION 3: E-COMMERCE (TMĐT) */}
@@ -243,51 +205,7 @@ export default function BangGiaPage() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-slate-900 text-white">
-                                    <tr>
-                                        <th className="py-4 px-6 text-left">Giá trị đơn hàng/Shop</th>
-                                        <th className="py-4 px-6 text-center">Phí mua hàng</th>
-                                        <th className="py-4 px-6 text-center">Cước HN</th>
-                                        <th className="py-4 px-6 text-center">Cước HCM</th>
-                                    </tr>
-                                </thead>
-                                <motion.tbody
-                                    className="divide-y divide-slate-100"
-                                    variants={{
-                                        hidden: { opacity: 0 },
-                                        show: { opacity: 1, transition: { staggerChildren: 0.05 } }
-                                    }}
-                                    initial="hidden"
-                                    whileInView="show"
-                                    viewport={{ once: true }}
-                                >
-                                    {pricing?.tmdt_shipping.map((tier, idx) => (
-                                        <motion.tr
-                                            key={idx}
-                                            className={`${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'
-                                                } hover:bg-red-50 transition-colors`}
-                                            variants={{
-                                                hidden: { opacity: 0, x: -10 },
-                                                show: { opacity: 1, x: 0 }
-                                            }}
-                                        >
-                                            <td className="py-4 px-6 font-medium text-slate-700">
-                                                {tier.max_value > 1000000000 ? `Trên ${formatMoney(tier.min_value)}₫` : `${formatMoney(tier.min_value)} - ${formatMoney(tier.max_value)}₫`}
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className="inline-block px-3 py-1 bg-red-100 text-red-700 rounded-full font-bold text-xs">{tier.fee_percent}%</span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center font-bold text-red-600">{formatMoney(tier.hn_actual)}₫</td>
-                                            <td className="py-4 px-6 text-center font-bold text-red-600">{formatMoney(tier.hcm_actual)}₫</td>
-                                        </motion.tr>
-                                    ))}
-                                </motion.tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <TmdtShippingTable data={pricing?.tmdt_shipping} />
                 </motion.div>
 
                 {/* SECTION 4: SERVICE INFO (POLICY) */}

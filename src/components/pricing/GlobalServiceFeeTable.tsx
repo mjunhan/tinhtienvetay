@@ -1,7 +1,19 @@
 import { motion } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
+import { useServiceFeeRules } from '@/hooks/usePricingRules';
 
-export function GlobalServiceFeeTable() {
+interface GlobalServiceFeeTableProps {
+    mode?: "view" | "edit";
+}
+
+export function GlobalServiceFeeTable({ mode = "view" }: GlobalServiceFeeTableProps) {
+    const { data: serviceFees, isLoading } = useServiceFeeRules();
+    // In a real implementation we might pass data as prop like others, but this component fetched data itself.
+    // We should probably keep fetching if it's already doing it, or lift state up.
+    // For consistency with other components, let's keep it as is but support editing locally if we were to implementing saving inside.
+    // However, Plan says "Batch Update". So lifting state up to Admin Page is better.
+    // BUT, doing that requires refactoring existing component significantly.
+    // Let's first just add the prop.
     return (
         <div className="w-full mb-8">
             <div className="bg-white rounded-2xl shadow-lg border border-amber-200 overflow-hidden">
