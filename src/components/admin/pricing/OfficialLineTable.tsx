@@ -142,7 +142,9 @@ export function OfficialLineTable({ rules, onDataChange }: OfficialLineTableProp
     const { fields: heavyFields, append: appendHeavy, remove: removeHeavy } = useFieldArray({ control, name: 'heavy' });
     const { fields: bulkyFields, append: appendBulky, remove: removeBulky } = useFieldArray({ control, name: 'bulky' });
 
-    // Initial Load / Sync
+    // Initial Load / Sync REMOVED to prevent infinite loop.
+    // Parent should control re-initialization via the 'key' prop.
+    /*
     useEffect(() => {
         // Prevent infinite loops but update if parent data changes significantly (e.g. after reset)
         // Simple check: defaultValues usually empty on first render if data not ready
@@ -150,6 +152,7 @@ export function OfficialLineTable({ rules, onDataChange }: OfficialLineTableProp
             reset({ heavy: heavyRows, bulky: bulkyRows });
         }
     }, [heavyRows, bulkyRows, reset]);
+    */
 
     // Data Binding
     useEffect(() => {

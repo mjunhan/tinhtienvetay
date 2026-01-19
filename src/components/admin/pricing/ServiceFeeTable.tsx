@@ -58,14 +58,15 @@ export function ServiceFeeTable({ data, onDataChange }: ServiceFeeTableProps) {
         name: "rows"
     });
 
-    // Reset loop
+    // Reset loop REMOVED to prevent infinite cycle. 
+    // Form will only initialize once. Parent can force re-init by changing the component 'key'.
+    /*
     useEffect(() => {
-        // Only reset if strict difference to avoid cursor jumping? 
-        // Actually for initial load it's fine.
         if (initialRows.length > 0) {
             reset({ rows: initialRows });
         }
     }, [initialRows, reset]);
+    */
 
     // Live binding back to parent
     useEffect(() => {

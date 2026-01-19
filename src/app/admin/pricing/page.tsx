@@ -99,6 +99,8 @@ export default function AdminPricingPage() {
     }, []);
 
     // --- Reset / Cancel ---
+    const [resetKey, setResetKey] = useState(0);
+
     const handleReset = () => {
         if (confirm("Bạn có chắc chắn muốn hủy bỏ mọi thay đổi?")) {
             if (pricing?.normal_shipping) setNormalShippingData(JSON.parse(JSON.stringify(pricing.normal_shipping)));
@@ -106,6 +108,7 @@ export default function AdminPricingPage() {
             if (shippingRates) setOfficialShippingData(JSON.parse(JSON.stringify(shippingRates)));
             if (serviceFees) setServiceFeeData(JSON.parse(JSON.stringify(serviceFees)));
             setHasChanges(false);
+            setResetKey(prev => prev + 1); // Force table components to remount/reset
             toast.info("Đã hủy bỏ thay đổi");
         }
     };
@@ -268,6 +271,7 @@ export default function AdminPricingPage() {
                     </div>
                     {/* NEW COMPONENT */}
                     <ServiceFeeTable
+                        key={resetKey}
                         data={serviceFeeData}
                         onDataChange={handleServiceFeeUpdate}
                     />
@@ -311,6 +315,7 @@ export default function AdminPricingPage() {
                             </div>
                             {/* NEW COMPONENT */}
                             <OfficialLineTable
+                                key={resetKey}
                                 rules={officialShippingData}
                                 onDataChange={handleOfficialUpdate}
                             />
