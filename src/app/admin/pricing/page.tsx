@@ -114,7 +114,7 @@ export default function AdminPricingPage() {
                 for (const tier of normalShippingData) {
                     // HN Rule
                     normalShippingRules.push({
-                        id: tier.hn_rule_id,
+                        ...(tier.hn_rule_id && { id: tier.hn_rule_id }),
                         method: 'TieuNgach',
                         type: 'value_based',
                         warehouse: 'HN',
@@ -124,7 +124,7 @@ export default function AdminPricingPage() {
                     });
                     // HCM Rule
                     normalShippingRules.push({
-                        id: tier.hcm_rule_id,
+                        ...(tier.hcm_rule_id && { id: tier.hcm_rule_id }),
                         method: 'TieuNgach',
                         type: 'value_based',
                         warehouse: 'HCM',
@@ -137,13 +137,7 @@ export default function AdminPricingPage() {
                 if (normalShippingRules.length > 0) {
                     const { error: normalUpsertError } = await supabase
                         .from('shipping_rate_rules')
-                        .upsert(normalShippingRules.map(r => {
-                            if (!r.id) {
-                                const { id, ...rest } = r;
-                                return rest;
-                            }
-                            return r;
-                        }));
+                        .upsert(normalShippingRules);
                     if (normalUpsertError) throw normalUpsertError;
                 }
 
@@ -152,7 +146,7 @@ export default function AdminPricingPage() {
                 for (const tier of normalShippingData) {
                     if (tier.fee_percent !== undefined) {
                         normalServiceFees.push({
-                            id: tier.fee_rule_id,
+                            ...(tier.fee_rule_id && { id: tier.fee_rule_id }),
                             method: 'TieuNgach',
                             min_order_value: tier.min_value,
                             max_order_value: tier.max_value,
@@ -165,13 +159,7 @@ export default function AdminPricingPage() {
                 if (normalServiceFees.length > 0) {
                     const { error: feeUpsertError } = await supabase
                         .from('service_fee_rules')
-                        .upsert(normalServiceFees.map(r => {
-                            if (!r.id) {
-                                const { id, ...rest } = r;
-                                return rest;
-                            }
-                            return r;
-                        }));
+                        .upsert(normalServiceFees);
                     if (feeUpsertError) throw feeUpsertError;
                 }
 
@@ -211,7 +199,7 @@ export default function AdminPricingPage() {
                 for (const tier of tmdtShippingData) {
                     // HN Rule
                     tmdtShippingRules.push({
-                        id: tier.hn_rule_id,
+                        ...(tier.hn_rule_id && { id: tier.hn_rule_id }),
                         method: 'TMDT',
                         type: 'value_based',
                         warehouse: 'HN',
@@ -221,7 +209,7 @@ export default function AdminPricingPage() {
                     });
                     // HCM Rule
                     tmdtShippingRules.push({
-                        id: tier.hcm_rule_id,
+                        ...(tier.hcm_rule_id && { id: tier.hcm_rule_id }),
                         method: 'TMDT',
                         type: 'value_based',
                         warehouse: 'HCM',
@@ -234,13 +222,7 @@ export default function AdminPricingPage() {
                 if (tmdtShippingRules.length > 0) {
                     const { error: tmdtUpsertError } = await supabase
                         .from('shipping_rate_rules')
-                        .upsert(tmdtShippingRules.map(r => {
-                            if (!r.id) {
-                                const { id, ...rest } = r;
-                                return rest;
-                            }
-                            return r;
-                        }));
+                        .upsert(tmdtShippingRules);
                     if (tmdtUpsertError) throw tmdtUpsertError;
                 }
 
