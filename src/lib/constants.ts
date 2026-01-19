@@ -29,3 +29,19 @@ export const DEFAULT_OFFICIAL_RATES = [
     { method: 'ChinhNgach', type: 'volume_based', subtype: 'bulky', warehouse: 'HN', min_value: 10, max_value: 999999, price: 2300000 },
     { method: 'ChinhNgach', type: 'volume_based', subtype: 'bulky', warehouse: 'HCM', min_value: 10, max_value: 999999, price: 2600000 },
 ];
+
+export const DEFAULT_TIEU_NGACH_RATES = [
+    { method: 'TieuNgach', type: 'value_based', subtype: 'standard', warehouse: 'HN', min_value: 0, max_value: 2000000, price: 25000 },
+    { method: 'TieuNgach', type: 'value_based', subtype: 'standard', warehouse: 'HCM', min_value: 0, max_value: 2000000, price: 30000 },
+
+    { method: 'TieuNgach', type: 'value_based', subtype: 'standard', warehouse: 'HN', min_value: 2000000, max_value: 10000000, price: 20000 },
+    { method: 'TieuNgach', type: 'value_based', subtype: 'standard', warehouse: 'HCM', min_value: 2000000, max_value: 10000000, price: 25000 },
+
+    { method: 'TieuNgach', type: 'value_based', subtype: 'standard', warehouse: 'HN', min_value: 10000000, max_value: 999999999, price: 15000 },
+    { method: 'TieuNgach', type: 'value_based', subtype: 'standard', warehouse: 'HCM', min_value: 10000000, max_value: 999999999, price: 20000 },
+];
+
+export const DEFAULT_TMDT_RATES = [
+    { method: 'TMDT', type: 'value_based', subtype: 'standard', warehouse: 'HN', min_value: 0, max_value: 999999999, price: 15000 },
+    { method: 'TMDT', type: 'value_based', subtype: 'standard', warehouse: 'HCM', min_value: 0, max_value: 999999999, price: 25000 },
+];

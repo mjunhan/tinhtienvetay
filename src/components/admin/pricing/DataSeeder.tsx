@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
-import { DEFAULT_SERVICE_FEES, DEFAULT_OFFICIAL_RATES } from '@/lib/constants';
+import { DEFAULT_SERVICE_FEES, DEFAULT_OFFICIAL_RATES, DEFAULT_TIEU_NGACH_RATES, DEFAULT_TMDT_RATES } from '@/lib/constants';
 import { RefreshCcw, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -18,21 +18,25 @@ export function DataSeeder() {
         setIsLoading(true);
         try {
             // 1. Delete all existing Service Fees & Official Rates
-            // Be careful not to delete Normal/TMDT unless intended, but spec says "Service Fee" and "Official Line"
+            // Be careful not to delete Normal/TMDT unless intended. Spec confirms: Reset All.
 
             // Delete Service Fees
-            const { error: delFeeErr } = await supabase.from('service_fee_rules').delete().eq('method', 'TieuNgach');
+            const { error: delFeeErr } = await supabase.from('service_fee_rules').delete().in('method', ['TieuNgach', 'TMDT']);
             if (delFeeErr) throw delFeeErr;
 
-            // Delete Official Rates
-            const { error: delRateErr } = await supabase.from('shipping_rate_rules').delete().eq('method', 'ChinhNgach');
+            // Delete Shipping Rates (ChinhNgach, TieuNgach, TMDT)
+            const { error: delRateErr } = await supabase.from('shipping_rate_rules').delete().in('method', ['ChinhNgach', 'TieuNgach', 'TMDT']);
             if (delRateErr) throw delRateErr;
 
             // 2. Insert Defaults
             const { error: insFeeErr } = await supabase.from('service_fee_rules').insert(DEFAULT_SERVICE_FEES);
             if (insFeeErr) throw insFeeErr;
 
-            const { error: insRateErr } = await supabase.from('shipping_rate_rules').insert(DEFAULT_OFFICIAL_RATES);
+            const { error: insRateErr } = await supabase.from('shipping_rate_rules').insert([
+                ...DEFAULT_OFFICIAL_RATES,
+                ...DEFAULT_TIEU_NGACH_RATES,
+                ...DEFAULT_TMDT_RATES
+            ]);
             if (insRateErr) throw insRateErr;
 
             toast.success('Đã khôi phục dữ liệu gốc thành công!');
@@ -41,6 +45,7 @@ export function DataSeeder() {
             queryClient.invalidateQueries({ queryKey: ['service-fees'] });
             queryClient.invalidateQueries({ queryKey: ['shipping-rates'] });
             queryClient.invalidateQueries({ queryKey: ['pricing'] });
+
 
         } catch (error: any) {
             console.error('Seeding error:', error);
