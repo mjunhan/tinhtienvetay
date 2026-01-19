@@ -1,19 +1,73 @@
-import { motion } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 import { useServiceFeeRules } from '@/hooks/usePricingRules';
+// Simple Input wrapper for styling
+const PercentInput = ({ value, onChange, disabled }: { value: number, onChange: (val: number) => void, disabled?: boolean }) => (
+    <div className="relative inline-block w-20">
+        <input
+            type="number"
+            value={value}
+            onChange={(e) => onChange(Number(e.target.value))}
+            className="w-full pl-2 pr-6 py-1 text-center font-bold bg-cyan-50 text-cyan-700 rounded-lg border border-cyan-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:bg-white transition-all disabled:opacity-50"
+            disabled={disabled}
+        />
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-600 font-bold text-xs">%</span>
+    </div>
+);
+
+interface ServiceFeeTier {
+    id?: string;
+    min_order_value: number;
+    deposit_percent: number;
+    fee_percent: number;
+}
 
 interface GlobalServiceFeeTableProps {
     mode?: "view" | "edit";
+    // If edit mode and external control
+    data?: ServiceFeeTier[];
+    onUpdate?: (id: string, field: 'fee_percent', value: number) => void;
 }
 
-export function GlobalServiceFeeTable({ mode = "view" }: GlobalServiceFeeTableProps) {
-    const { data: serviceFees, isLoading } = useServiceFeeRules();
-    // In a real implementation we might pass data as prop like others, but this component fetched data itself.
-    // We should probably keep fetching if it's already doing it, or lift state up.
-    // For consistency with other components, let's keep it as is but support editing locally if we were to implementing saving inside.
-    // However, Plan says "Batch Update". So lifting state up to Admin Page is better.
-    // BUT, doing that requires refactoring existing component significantly.
-    // Let's first just add the prop.
+export function GlobalServiceFeeTable({ mode = "view", data, onUpdate }: GlobalServiceFeeTableProps) {
+    // Fallback to internal hook if no data provided (View mode default behavior)
+    const { data: fetchedFees } = useServiceFeeRules();
+
+    // Use provided data (for edit mode) or fetched data (for view only)
+    const feesToRender = data || fetchedFees || [];
+
+    // Helper to find fee
+    const findFee = (minVal: number, deposit: number) => {
+        return feesToRender.find(f =>
+            // Rough match for ranges based on min_order_value
+            // Assumptions based on original hardcoded table:
+            // < 2M -> min 0
+            // 2M-5M -> min 2000000
+            // > 5M -> min 5000000
+            f.min_order_value === minVal && f.deposit_percent === deposit
+        );
+    };
+
+    // Helper to render cell
+    const renderCell = (minVal: number, deposit: number) => {
+        const fee = findFee(minVal, deposit);
+        if (!fee) return <span className="text-gray-400">---</span>;
+
+        if (mode === 'edit' && onUpdate && fee.id) {
+            return (
+                <PercentInput
+                    value={fee.fee_percent}
+                    onChange={(val) => onUpdate(fee.id!, 'fee_percent', val)}
+                />
+            );
+        }
+
+        return (
+            <span className="inline-block px-3 py-1 bg-cyan-50 text-cyan-700 rounded-lg font-bold shadow-sm border border-cyan-100">
+                {fee.fee_percent}%
+            </span>
+        );
+    };
+
     return (
         <div className="w-full mb-8">
             <div className="bg-white rounded-2xl shadow-lg border border-amber-200 overflow-hidden">
@@ -36,10 +90,10 @@ export function GlobalServiceFeeTable({ mode = "view" }: GlobalServiceFeeTablePr
                                     GIÁ TRỊ ĐƠN HÀNG
                                 </th>
                                 <th className="py-4 px-6 text-center font-bold border-b border-amber-200 w-1/3">
-                                    CỌC DƯỚI 80%
+                                    CỌC DƯỚI 80% (70%)
                                 </th>
                                 <th className="py-4 px-6 text-center font-bold border-b border-amber-200 w-1/3">
-                                    CỌC TRÊN 80%
+                                    CỌC TRÊN 80% (100%)
                                 </th>
                             </tr>
                         </thead>
@@ -50,14 +104,10 @@ export function GlobalServiceFeeTable({ mode = "view" }: GlobalServiceFeeTablePr
                                     Dưới 2 triệu
                                 </td>
                                 <td className="py-4 px-6 text-center">
-                                    <span className="inline-block px-3 py-1 bg-cyan-50 text-cyan-700 rounded-lg font-bold shadow-sm border border-cyan-100">
-                                        5%
-                                    </span>
+                                    {renderCell(0, 70)}
                                 </td>
                                 <td className="py-4 px-6 text-center">
-                                    <span className="inline-block px-3 py-1 bg-cyan-50 text-cyan-700 rounded-lg font-bold shadow-sm border border-cyan-100">
-                                        3%
-                                    </span>
+                                    {renderCell(0, 100)}
                                 </td>
                             </tr>
 
@@ -67,14 +117,10 @@ export function GlobalServiceFeeTable({ mode = "view" }: GlobalServiceFeeTablePr
                                     Từ 2 triệu đến 5 triệu
                                 </td>
                                 <td className="py-4 px-6 text-center">
-                                    <span className="inline-block px-3 py-1 bg-cyan-50 text-cyan-700 rounded-lg font-bold shadow-sm border border-cyan-100">
-                                        2%
-                                    </span>
+                                    {renderCell(2000000, 70)}
                                 </td>
                                 <td className="py-4 px-6 text-center">
-                                    <span className="inline-block px-3 py-1 bg-cyan-50 text-cyan-700 rounded-lg font-bold shadow-sm border border-cyan-100">
-                                        1.5%
-                                    </span>
+                                    {renderCell(2000000, 100)}
                                 </td>
                             </tr>
 
@@ -84,14 +130,10 @@ export function GlobalServiceFeeTable({ mode = "view" }: GlobalServiceFeeTablePr
                                     Trên 5 triệu
                                 </td>
                                 <td className="py-4 px-6 text-center">
-                                    <span className="inline-block px-3 py-1 bg-cyan-50 text-cyan-700 rounded-lg font-bold shadow-sm border border-cyan-100">
-                                        1.5%
-                                    </span>
+                                    {renderCell(5000000, 70)}
                                 </td>
                                 <td className="py-4 px-6 text-center">
-                                    <span className="inline-block px-3 py-1 bg-cyan-50 text-cyan-700 rounded-lg font-bold shadow-sm border border-cyan-100">
-                                        1.2%
-                                    </span>
+                                    {renderCell(5000000, 100)}
                                 </td>
                             </tr>
                         </tbody>
