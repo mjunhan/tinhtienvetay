@@ -1,6 +1,6 @@
 'use client';
 
-import { usePricingRules, useShippingRateRules } from '@/hooks/usePricingRules';
+import { usePricingRules, useShippingRateRules, useServiceFeeRules } from '@/hooks/usePricingRules';
 import { ArrowLeft, Loader2, AlertTriangle, CheckCircle, Info, Calculator, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -10,40 +10,12 @@ import { OfficialShippingTable } from '@/components/pricing/OfficialShippingTabl
 import { NormalShippingTable } from '@/components/pricing/NormalShippingTable';
 import { TmdtShippingTable } from '@/components/pricing/TmdtShippingTable';
 
-// Hardcoded data for Normal Shipping to ensure stability on public page
-const HARDCODED_NORMAL_RATES = [
-    {
-        min_value: 0,
-        max_value: 2000000,
-        fee_percent: 3,
-        hn_actual: 19000,
-        hn_converted: 21000,
-        hcm_actual: 24000,
-        hcm_converted: 26000
-    },
-    {
-        min_value: 2000000,
-        max_value: 5000000,
-        fee_percent: 1.5,
-        hn_actual: 14000,
-        hn_converted: 16000,
-        hcm_actual: 19000,
-        hcm_converted: 21000
-    },
-    {
-        min_value: 5000000,
-        max_value: 99999999999, // Arbitrary large number
-        fee_percent: 1.2,
-        hn_actual: 8000,
-        hn_converted: 10000,
-        hcm_actual: 12000,
-        hcm_converted: 14000
-    }
-];
+
 
 export default function BangGiaPage() {
     const { data: pricing, isLoading, error } = usePricingRules();
     const { data: shippingRates } = useShippingRateRules();
+    const { data: serviceFees } = useServiceFeeRules();
 
     const formatMoney = (value: number) => {
         return new Intl.NumberFormat('vi-VN').format(value);
@@ -132,7 +104,7 @@ export default function BangGiaPage() {
                     transition={{ delay: 0.05 }}
                     className="mb-12"
                 >
-                    <GlobalServiceFeeTable />
+                    <GlobalServiceFeeTable data={serviceFees || []} />
                 </motion.div>
 
                 {/* SECTION 1: OFFICIAL LINE (CHÍNH NGẠCH) - NEW DESIGN */}
@@ -169,7 +141,7 @@ export default function BangGiaPage() {
                         <span className="hidden md:inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-bold">80% khách hàng chọn</span>
                     </div>
 
-                    <NormalShippingTable data={HARDCODED_NORMAL_RATES} />
+                    <NormalShippingTable data={pricing?.normal_shipping || []} />
                 </motion.div>
 
                 {/* SECTION 3: E-COMMERCE (TMĐT) */}
