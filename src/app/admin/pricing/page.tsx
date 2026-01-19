@@ -331,6 +331,7 @@ export default function AdminPricingPage() {
                                     <h2 className="text-2xl font-bold text-slate-800">Vận Chuyển Thường (Tiểu Ngạch)</h2>
                                 </div>
                                 <NormalShippingTable
+                                    key={resetKey}
                                     data={normalShippingData}
                                     mode="edit"
                                     onUpdate={handleNormalUpdate}
@@ -343,6 +344,7 @@ export default function AdminPricingPage() {
                                     <h2 className="text-2xl font-bold text-slate-800">Line Thương Mại Điện Tử</h2>
                                 </div>
                                 <TmdtShippingTable
+                                    key={resetKey}
                                     data={tmdtShippingData}
                                     mode="edit"
                                     onUpdate={handleTmdtUpdate}
