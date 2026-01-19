@@ -69,9 +69,11 @@ export function usePricingRules() {
                         if (rule.warehouse === 'HN') {
                             existing.hn_actual = rule.price;
                             existing.hn_converted = rule.price; // Simplified - same for now
+                            existing.hn_rule_id = rule.id;
                         } else {
                             existing.hcm_actual = rule.price;
                             existing.hcm_converted = rule.price;
+                            existing.hcm_rule_id = rule.id;
                         }
                     } else {
                         // Create new tier
@@ -120,8 +122,10 @@ export function usePricingRules() {
                     if (existing) {
                         if (rule.warehouse === 'HN') {
                             existing.hn_actual = rule.price;
+                            existing.hn_rule_id = rule.id;
                         } else {
                             existing.hcm_actual = rule.price;
+                            existing.hcm_rule_id = rule.id;
                         }
                     } else {
                         acc.push({
