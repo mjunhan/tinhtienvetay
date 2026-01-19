@@ -7,11 +7,12 @@ import { usePricingRules, useServiceFeeRules, useShippingRateRules } from '@/hoo
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast, Toaster } from 'sonner';
 import { DollarSign, Truck, Info } from 'lucide-react';
-import { GlobalServiceFeeTable } from '@/components/pricing/GlobalServiceFeeTable';
-import { OfficialShippingTable } from '@/components/pricing/OfficialShippingTable';
+import { ServiceFeeTable } from '@/components/admin/pricing/ServiceFeeTable'; // NEW
+import { OfficialLineTable } from '@/components/admin/pricing/OfficialLineTable'; // NEW
 import { NormalShippingTable } from '@/components/pricing/NormalShippingTable';
 import { TmdtShippingTable } from '@/components/pricing/TmdtShippingTable';
 import { PricingSaveBar } from '@/components/pricing/PricingSaveBar';
+import { DataSeeder } from '@/components/admin/pricing/DataSeeder'; // NEW
 
 export default function AdminPricingPage() {
     const router = useRouter();
@@ -131,31 +132,29 @@ export default function AdminPricingPage() {
             if (tmdtUpdates.length > 0) await Promise.all(tmdtUpdates);
 
             // 3. Official Shipping (Upsert & Delete)
-            if (officialShippingData.length > 0) {
+            if (officialShippingData.length > 0 || shippingRates && shippingRates.length > 0) {
                 // Upsert (Insert or Update)
-                const { error: upsertError } = await supabase
-                    .from('shipping_rate_rules')
-                    .upsert(officialShippingData.map(r => ({
-                        id: r.id, // If undefined, will auto-gen? No, UUID must be undefined to auto-gen or let Supabase handle it if logic matches. 
-                        // Actually Supabase upsert requires ID to match for update. If ID is missing, it inserts.
-                        method: 'ChinhNgach', // Safety
-                        type: r.type,
-                        subtype: r.subtype,
-                        warehouse: r.warehouse,
-                        min_value: r.min_value,
-                        max_value: r.max_value,
-                        price: r.price
-                    })).map(r => {
-                        // Remove undefined ID to allow auto-generation
-                        if (!r.id) delete r.id;
-                        return r;
-                    }));
-                if (upsertError) throw upsertError;
+                if (officialShippingData.length > 0) {
+                    const { error: upsertError } = await supabase
+                        .from('shipping_rate_rules')
+                        .upsert(officialShippingData.map(r => ({
+                            id: r.id, // ID undefined = New Insert
+                            method: 'ChinhNgach',
+                            type: r.type,
+                            subtype: r.subtype,
+                            warehouse: r.warehouse,
+                            min_value: r.min_value,
+                            max_value: r.max_value,
+                            price: r.price
+                        })).map(r => {
+                            if (!r.id) delete r.id; // Ensure Supabase treats as insert
+                            return r;
+                        }));
+                    if (upsertError) throw upsertError;
+                }
 
                 // Delete Missing IDs
-                // Current IDs in UI
                 const currentIds = officialShippingData.filter(r => r.id).map(r => r.id);
-                // Original IDs from DB
                 const originalIds = shippingRates?.filter(r => r.method === 'ChinhNgach').map(r => r.id) || [];
                 const idsToDelete = originalIds.filter(id => !currentIds.includes(id));
 
@@ -165,22 +164,24 @@ export default function AdminPricingPage() {
             }
 
             // 4. Service Fees (Upsert & Delete)
-            if (serviceFeeData.length > 0) {
+            if (serviceFeeData.length > 0 || serviceFees && serviceFees.length > 0) {
                 // Upsert
-                const { error: upsertFeeError } = await supabase
-                    .from('service_fee_rules')
-                    .upsert(serviceFeeData.map(r => ({
-                        id: r.id,
-                        method: 'TieuNgach',
-                        min_order_value: r.min_order_value,
-                        max_order_value: r.max_order_value,
-                        deposit_percent: r.deposit_percent,
-                        fee_percent: r.fee_percent
-                    })).map(r => {
-                        if (!r.id) delete r.id;
-                        return r;
-                    }));
-                if (upsertFeeError) throw upsertFeeError;
+                if (serviceFeeData.length > 0) {
+                    const { error: upsertFeeError } = await supabase
+                        .from('service_fee_rules')
+                        .upsert(serviceFeeData.map(r => ({
+                            id: r.id,
+                            method: 'TieuNgach',
+                            min_order_value: r.min_order_value,
+                            max_order_value: r.max_order_value,
+                            deposit_percent: r.deposit_percent,
+                            fee_percent: r.fee_percent
+                        })).map(r => {
+                            if (!r.id) delete r.id;
+                            return r;
+                        }));
+                    if (upsertFeeError) throw upsertFeeError;
+                }
 
                 // Delete Missing
                 const currentFeeIds = serviceFeeData.filter(r => r.id).map(r => r.id);
@@ -255,8 +256,8 @@ export default function AdminPricingPage() {
                             <p>Sửa trực tiếp số % trong bảng bên dưới. Thay đổi sẽ áp dụng sau khi bấm 'Lưu'.</p>
                         </div>
                     </div>
-                    <GlobalServiceFeeTable
-                        mode="edit"
+                    {/* NEW COMPONENT */}
+                    <ServiceFeeTable
                         data={serviceFeeData}
                         onDataChange={handleServiceFeeUpdate}
                     />
@@ -298,9 +299,9 @@ export default function AdminPricingPage() {
                                     <p>Sửa giá và các mốc cân nặng/thể tích trực tiếp.</p>
                                 </div>
                             </div>
-                            <OfficialShippingTable
+                            {/* NEW COMPONENT */}
+                            <OfficialLineTable
                                 rules={officialShippingData}
-                                mode="edit"
                                 onDataChange={handleOfficialUpdate}
                             />
                         </div>
@@ -337,6 +338,9 @@ export default function AdminPricingPage() {
                 </div>
             )}
 
+            {/* DATA SEEDER SECTION */}
+            <DataSeeder />
+
             {/* Pricing Save Bar */}
             <PricingSaveBar
                 hasChanges={hasChanges}
@@ -349,3 +353,4 @@ export default function AdminPricingPage() {
         </div>
     );
 }
+
