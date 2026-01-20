@@ -5,6 +5,7 @@ import { Plus, Trash2, Save, Info } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ServiceFeeRule } from '@/types/database.types';
 import { DEFAULT_SERVICE_FEES } from '@/lib/constants';
+import { v4 as uuidv4 } from 'uuid';
 
 interface FeeRow {
     id_low?: string;
@@ -79,7 +80,7 @@ export function ServiceFeeTable({ data, onDataChange }: ServiceFeeTableProps) {
 
                 // Rule 1: Low Deposit
                 flattened.push({
-                    id: row.id_low,
+                    id: row.id_low || uuidv4(), // Fallback for existing data without ID
                     min_order_value: Number(row.min_order_value),
                     max_order_value: Number(row.max_order_value),
                     deposit_percent: 70,
@@ -89,10 +90,10 @@ export function ServiceFeeTable({ data, onDataChange }: ServiceFeeTableProps) {
 
                 // Rule 2: High Deposit
                 flattened.push({
-                    id: row.id_high,
+                    id: row.id_high || uuidv4(), // Fallback for existing data without ID
                     min_order_value: Number(row.min_order_value),
                     max_order_value: Number(row.max_order_value),
-                    deposit_percent: 100,
+                    deposit_percent: 80, // High deposit tier (DB constraint requires 80)
                     fee_percent: Number(row.fee_percent_high),
                     method: 'TieuNgach'
                 });
@@ -193,6 +194,8 @@ export function ServiceFeeTable({ data, onDataChange }: ServiceFeeTableProps) {
                                             {...register(`rows.${index}.fee_percent_low`)}
                                             type="number"
                                             step="0.1"
+                                            min="0"
+                                            max="100"
                                             className="w-full px-2 py-1.5 text-center font-bold text-blue-600 bg-blue-50 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
                                         />
                                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-400 text-xs font-bold">%</span>
@@ -206,6 +209,8 @@ export function ServiceFeeTable({ data, onDataChange }: ServiceFeeTableProps) {
                                             {...register(`rows.${index}.fee_percent_high`)}
                                             type="number"
                                             step="0.1"
+                                            min="0"
+                                            max="100"
                                             className="w-full px-2 py-1.5 text-center font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
                                         />
                                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-indigo-400 text-xs font-bold">%</span>
@@ -231,7 +236,14 @@ export function ServiceFeeTable({ data, onDataChange }: ServiceFeeTableProps) {
                 <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => append({ min_order_value: 0, max_order_value: 0, fee_percent_low: 0, fee_percent_high: 0 })}
+                    onClick={() => append({
+                        min_order_value: 0,
+                        max_order_value: 0,
+                        fee_percent_low: 0,
+                        fee_percent_high: 0,
+                        id_low: uuidv4(),
+                        id_high: uuidv4()
+                    })}
                     className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                 >
                     <Plus size={16} className="mr-2" /> Thêm khoảng giá trị

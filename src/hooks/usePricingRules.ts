@@ -99,7 +99,7 @@ export function usePricingRules() {
                 const matchingFee = serviceFeesTyped.find(
                     (sf) =>
                         sf.method === 'TieuNgach' &&
-                        sf.deposit_percent === 70 &&
+                        sf.deposit_percent === 80 &&
                         tier.min_value >= sf.min_order_value &&
                         tier.max_value <= sf.max_order_value
                 );
@@ -147,7 +147,7 @@ export function usePricingRules() {
                 const matchingFee = serviceFeesTyped.find(
                     (sf) =>
                         sf.method === 'TMDT' &&
-                        sf.deposit_percent === 70 &&
+                        sf.deposit_percent === 80 &&
                         tier.min_value >= sf.min_order_value &&
                         tier.max_value <= sf.max_order_value
                 );

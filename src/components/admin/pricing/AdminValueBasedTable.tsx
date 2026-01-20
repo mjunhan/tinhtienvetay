@@ -3,6 +3,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { NumericFormat } from 'react-number-format';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ValueBasedRow {
     id_hn?: string;
@@ -37,40 +38,17 @@ export function AdminValueBasedTable({
             return [];
         }
 
-        // Group by min_value and max_value
-        const grouped = new Map<string, ValueBasedRow>();
-
-        data.forEach((item: any) => {
-            const key = `${item.min_value}-${item.max_value}`;
-            const existing = grouped.get(key) || {
-                min_value: item.min_value,
-                max_value: item.max_value,
-                fee_percent: item.fee_percent || 0,
-                price_hn: 0,
-                price_hcm: 0,
-                id_hn: undefined,
-                id_hcm: undefined,
-                id_fee: undefined
-            };
-
-            // Handle hn/hcm pricing (both converted and actual)
-            if (item.hn_actual !== undefined) {
-                existing.price_hn = item.hn_actual;
-                existing.id_hn = item.hn_rule_id;
-            }
-            if (item.hcm_actual !== undefined) {
-                existing.price_hcm = item.hcm_actual;
-                existing.id_hcm = item.hcm_rule_id;
-            }
-            if (item.fee_percent !== undefined) {
-                existing.fee_percent = item.fee_percent;
-                existing.id_fee = item.fee_rule_id;
-            }
-
-            grouped.set(key, existing);
-        });
-
-        return Array.from(grouped.values()).sort((a, b) => a.min_value - b.min_value);
+        // Direct map without grouping/sorting to allow duplicates (new rows) and preserve order
+        return data.map((item: any) => ({
+            min_value: item.min_value,
+            max_value: item.max_value,
+            fee_percent: item.fee_percent || 0,
+            price_hn: item.hn_actual || 0,
+            price_hcm: item.hcm_actual || 0,
+            id_hn: item.hn_rule_id,
+            id_hcm: item.hcm_rule_id,
+            id_fee: item.fee_rule_id
+        }));
     }, [data]);
 
     const { control, watch, reset, getValues } = useForm<{ rows: ValueBasedRow[] }>({
@@ -85,9 +63,20 @@ export function AdminValueBasedTable({
     // Sync with external data changes (avoid infinite loops)
     useEffect(() => {
         const currentValues = getValues().rows;
-        if (JSON.stringify(initialRows) !== JSON.stringify(currentValues)) {
+
+        // Only reset if the data structure has fundamentally changed (e.g. new length)
+        // or if the form is empty but we have data.
+        // We avoid resetting on every value change to prevent input cursor jumping/blurring.
+        if (initialRows.length !== currentValues.length) {
+            // If length matches, we assume it's just value updates which are handled by user input
+            // Checks for edge case: Component mounted with empty data, then data loaded
+            reset({ rows: initialRows });
+        } else if (currentValues.length === 0 && initialRows.length > 0) {
             reset({ rows: initialRows });
         }
+        // Note: If we strictly needed to sync external updates (e.g. from another user), 
+        // we'd need a more complex check or a manual "Refresh" button. 
+        // For local editing, this "Init Only" approach is smoother.
     }, [initialRows, reset, getValues]);
 
     // Propagate changes up to parent
@@ -214,6 +203,8 @@ export function AdminValueBasedTable({
                                                         {...field}
                                                         type="number"
                                                         step="0.1"
+                                                        min="0"
+                                                        max="100"
                                                         className={`w-full pl-2 pr-6 py-1.5 text-center font-bold ${colors.cellBg} ${colors.cellText} border border-gray-200 rounded outline-none ${colors.inputRing} focus:ring-2`}
                                                     />
                                                     <span className={`absolute right-2 top-1/2 -translate-y-1/2 ${colors.cellText} text-xs font-bold`}>%</span>
@@ -290,9 +281,9 @@ export function AdminValueBasedTable({
                         fee_percent: 0,
                         price_hn: 0,
                         price_hcm: 0,
-                        id_hn: undefined,
-                        id_hcm: undefined,
-                        id_fee: undefined
+                        id_hn: uuidv4(),
+                        id_hcm: uuidv4(),
+                        id_fee: uuidv4()
                     })}
                     className="w-full border-dashed border-gray-300 hover:border-blue-500 hover:text-blue-600"
                 >

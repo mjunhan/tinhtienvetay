@@ -1,49 +1,88 @@
 @import "tailwindcss";
 
+@theme {
+  /* Royal Gold Palette */
+  --color-primary: #F59E0B; /* Amber 500 */
+  --color-primary-hover: #D97706; /* Amber 600 */
+  --color-primary-foreground: #1E293B; /* Slate 900 */
+  
+  --color-secondary: #0F172A; /* Slate 900 - Dark Sidebar/Header */
+  --color-secondary-foreground: #F8FAFC; /* Slate 50 */
+  
+  --color-background: #F8FAFC; /* Slate 50 - Page BG */
+  --color-surface: #FFFFFF; /* White - Card BG */
+  
+  --color-neutral: #64748B; /* Slate 500 */
+  --color-border: #E2E8F0; /* Slate 200 */
+
+  /* Status */
+  --color-success: #10B981; /* Emerald 500 */
+  --color-error: #F43F5E; /* Rose 500 */
+  
+  /* Radii */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
 :root {
-  /* Golden Luxury Palette - v0.3.0 */
-  --color-primary: #F59E0B;
-  /* Amber 500 */
-  --color-primary-hover: #D97706;
-  /* Amber 600 */
-  --color-primary-dark: #B45309;
-  /* Amber 700 */
-  --color-secondary: #FCD34D;
-  /* Amber 300 */
-  --color-background: #FFFBEB;
-  /* Amber 50 */
-  --color-surface: #FFFFFF;
-  --color-text-main: #0F172A;
-  /* Slate 900 */
-  --color-text-body: #475569;
-  /* Slate 600 */
-  --color-text-muted: #94A3B8;
-  /* Slate 400 */
+  /* Legacy Variables for Compatibility */
+  --background: var(--color-background);
+  --foreground: #0F172A; /* Slate 900 */
+  
+  --card: var(--color-surface);
+  --card-foreground: #0F172A;
+  
+  --popover: var(--color-surface);
+  --popover-foreground: #0F172A;
+  
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-primary-foreground);
+  
+  --secondary: var(--color-secondary);
+  --secondary-foreground: var(--color-secondary-foreground);
+  
+  --muted: #F1F5F9; /* Slate 100 */
+  --muted-foreground: #64748B; /* Slate 500 */
+  
+  --accent: #FEF3C7; /* Amber 100 */
+  --accent-foreground: #92400E; /* Amber 800 */
+  
+  --destructive: var(--color-error);
+  --destructive-foreground: #FFFFFF;
+
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--color-primary);
+  
+  --radius: var(--radius-md);
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-text-body);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
 }
 
-/* Glassmorphism utility classes */
-.glass {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* Base Component Styles */
+@layer base {
+  button {
+    @apply cursor-pointer;
+  }
 }
 
-.glass-dark {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-/* Golden glow effect for premium elements */
-.golden-glow {
-  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.3);
-}
-
-.golden-glow-hover:hover {
-  box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.4);
+/* Utilities */
+@layer utilities {    
+    .glass {
+       @apply bg-white/80 backdrop-blur-md border border-white/20;
+    }
+    
+    .glass-dark {
+       @apply bg-slate-900/90 backdrop-blur-md border-r border-slate-800;
+    }
+    
+    /* Royal Gold Shadow */
+    .shadow-gold {
+        box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2), 0 4px 6px -2px rgba(245, 158, 11, 0.1);
+    }
 }

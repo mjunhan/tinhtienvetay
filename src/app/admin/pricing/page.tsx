@@ -12,6 +12,7 @@ import { OfficialLineTable } from '@/components/admin/pricing/OfficialLineTable'
 import { AdminValueBasedTable } from '@/components/admin/pricing/AdminValueBasedTable'; // NEW
 import { PricingSaveBar } from '@/components/pricing/PricingSaveBar';
 import { DataSeeder } from '@/components/admin/pricing/DataSeeder'; // NEW
+import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminPricingPage() {
     const router = useRouter();
@@ -107,6 +108,13 @@ export default function AdminPricingPage() {
     // --- Batch Save Mutation ---
     const saveChangesMutation = useMutation({
         mutationFn: async () => {
+            // Helper for deduplication
+            const uniqueBy = (arr: any[], key: string) => {
+                return arr.filter((item, index, self) =>
+                    index === self.findIndex((t) => t[key] === item[key])
+                );
+            };
+
             // 1. Normal Shipping (TieuNgach) - Upsert & Delete
             if (normalShippingData.length > 0 || pricing?.normal_shipping) {
                 // Upsert shipping rates
@@ -114,7 +122,7 @@ export default function AdminPricingPage() {
                 for (const tier of normalShippingData) {
                     // HN Rule
                     normalShippingRules.push({
-                        ...(tier.hn_rule_id && { id: tier.hn_rule_id }),
+                        id: tier.hn_rule_id || uuidv4(), // Fallback for existing data without ID
                         method: 'TieuNgach',
                         type: 'value_based',
                         warehouse: 'HN',
@@ -124,7 +132,7 @@ export default function AdminPricingPage() {
                     });
                     // HCM Rule
                     normalShippingRules.push({
-                        ...(tier.hcm_rule_id && { id: tier.hcm_rule_id }),
+                        id: tier.hcm_rule_id || uuidv4(), // Fallback for existing data without ID
                         method: 'TieuNgach',
                         type: 'value_based',
                         warehouse: 'HCM',
@@ -137,7 +145,7 @@ export default function AdminPricingPage() {
                 if (normalShippingRules.length > 0) {
                     const { error: normalUpsertError } = await supabase
                         .from('shipping_rate_rules')
-                        .upsert(normalShippingRules);
+                        .upsert(uniqueBy(normalShippingRules, 'id'));
                     if (normalUpsertError) throw normalUpsertError;
                 }
 
@@ -146,11 +154,11 @@ export default function AdminPricingPage() {
                 for (const tier of normalShippingData) {
                     if (tier.fee_percent !== undefined) {
                         normalServiceFees.push({
-                            ...(tier.fee_rule_id && { id: tier.fee_rule_id }),
+                            id: tier.fee_rule_id || uuidv4(), // Fallback for existing data
                             method: 'TieuNgach',
                             min_order_value: tier.min_value,
                             max_order_value: tier.max_value,
-                            deposit_percent: 70, // Default
+                            deposit_percent: 80, // Updated to 80 to match schema
                             fee_percent: tier.fee_percent
                         });
                     }
@@ -159,7 +167,7 @@ export default function AdminPricingPage() {
                 if (normalServiceFees.length > 0) {
                     const { error: feeUpsertError } = await supabase
                         .from('service_fee_rules')
-                        .upsert(normalServiceFees);
+                        .upsert(uniqueBy(normalServiceFees, 'id'));
                     if (feeUpsertError) throw feeUpsertError;
                 }
 
@@ -199,7 +207,7 @@ export default function AdminPricingPage() {
                 for (const tier of tmdtShippingData) {
                     // HN Rule
                     tmdtShippingRules.push({
-                        ...(tier.hn_rule_id && { id: tier.hn_rule_id }),
+                        id: tier.hn_rule_id || uuidv4(), // Fallback for existing data
                         method: 'TMDT',
                         type: 'value_based',
                         warehouse: 'HN',
@@ -209,7 +217,7 @@ export default function AdminPricingPage() {
                     });
                     // HCM Rule
                     tmdtShippingRules.push({
-                        ...(tier.hcm_rule_id && { id: tier.hcm_rule_id }),
+                        id: tier.hcm_rule_id || uuidv4(), // Fallback for existing data
                         method: 'TMDT',
                         type: 'value_based',
                         warehouse: 'HCM',
@@ -222,8 +230,30 @@ export default function AdminPricingPage() {
                 if (tmdtShippingRules.length > 0) {
                     const { error: tmdtUpsertError } = await supabase
                         .from('shipping_rate_rules')
-                        .upsert(tmdtShippingRules);
+                        .upsert(uniqueBy(tmdtShippingRules, 'id'));
                     if (tmdtUpsertError) throw tmdtUpsertError;
+                }
+
+                // Upsert service fees for TMDT
+                const tmdtServiceFees = [];
+                for (const tier of tmdtShippingData) {
+                    if (tier.fee_percent !== undefined) {
+                        tmdtServiceFees.push({
+                            id: tier.fee_rule_id || uuidv4(), // Fallback
+                            method: 'TMDT',
+                            min_order_value: tier.min_value,
+                            max_order_value: tier.max_value,
+                            deposit_percent: 80, // Default to 80? Or 70? Keeping consistent with schema check
+                            fee_percent: tier.fee_percent
+                        });
+                    }
+                }
+
+                if (tmdtServiceFees.length > 0) {
+                    const { error: tmdtFeeUpsertError } = await supabase
+                        .from('service_fee_rules')
+                        .upsert(uniqueBy(tmdtServiceFees, 'id'));
+                    if (tmdtFeeUpsertError) throw tmdtFeeUpsertError;
                 }
 
                 // Delete missing shipping rates
@@ -239,6 +269,20 @@ export default function AdminPricingPage() {
                 if (tmdtShippingIdsToDelete.length > 0) {
                     await supabase.from('shipping_rate_rules').delete().in('id', tmdtShippingIdsToDelete);
                 }
+
+                // Delete missing service fees for TMDT
+                const currentTmdtFeeIds = tmdtShippingData
+                    .map(t => t.fee_rule_id)
+                    .filter(Boolean);
+                const originalTmdtFeeIds = pricing?.tmdt_shipping
+                    ?.map((t: any) => t.fee_rule_id)
+                    .filter(Boolean) || [];
+                const tmdtFeeIdsToDelete = originalTmdtFeeIds
+                    .filter(id => !currentTmdtFeeIds.includes(id));
+
+                if (tmdtFeeIdsToDelete.length > 0) {
+                    await supabase.from('service_fee_rules').delete().in('id', tmdtFeeIdsToDelete);
+                }
             }
 
             // 3. Official Shipping (Upsert & Delete)
@@ -247,8 +291,8 @@ export default function AdminPricingPage() {
                 if (officialShippingData.length > 0) {
                     const { error: upsertError } = await supabase
                         .from('shipping_rate_rules')
-                        .upsert(officialShippingData.map(r => ({
-                            ...(r.id && { id: r.id }),
+                        .upsert(uniqueBy(officialShippingData.map(r => ({
+                            id: r.id || uuidv4(), // Fallback for existing data
                             method: 'ChinhNgach',
                             type: r.type,
                             subtype: r.subtype,
@@ -256,7 +300,7 @@ export default function AdminPricingPage() {
                             min_value: r.min_value,
                             max_value: r.max_value,
                             price: r.price
-                        })));
+                        })), 'id'));
                     if (upsertError) throw upsertError;
                 }
 
@@ -276,14 +320,14 @@ export default function AdminPricingPage() {
                 if (serviceFeeData.length > 0) {
                     const { error: upsertFeeError } = await supabase
                         .from('service_fee_rules')
-                        .upsert(serviceFeeData.map(r => ({
-                            ...(r.id && { id: r.id }),
+                        .upsert(uniqueBy(serviceFeeData.map(r => ({
+                            id: r.id || uuidv4(), // Fallback for existing data
                             method: 'TieuNgach',
                             min_order_value: r.min_order_value,
                             max_order_value: r.max_order_value,
                             deposit_percent: r.deposit_percent,
                             fee_percent: r.fee_percent
-                        })));
+                        })), 'id'));
                     if (upsertFeeError) throw upsertFeeError;
                 }
 
@@ -304,10 +348,37 @@ export default function AdminPricingPage() {
             queryClient.invalidateQueries({ queryKey: ['shipping-rates'] });
             queryClient.invalidateQueries({ queryKey: ['service-fees'] });
         },
-        onError: (error) => {
-            console.error('Save failed:', error);
-            // We can also trigger the toast here if we want global visibility
-            toast.error('Lỗi khi lưu thay đổi: ' + error.message);
+        onError: (error: any) => {
+            console.error('Save failed details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+
+            // Parse constraint errors for user-friendly messages
+            let errorMessage = 'Lỗi khi lưu thay đổi';
+
+            if (error.message) {
+                const constraintMatch = error.message.match(/constraint "(.+?)"/i);
+
+                if (constraintMatch) {
+                    const constraint = constraintMatch[1];
+
+                    // Map constraint names to user-friendly messages
+                    if (constraint.includes('fee_percent_check')) {
+                        errorMessage = 'Phí dịch vụ phải nằm trong khoảng 0-100%';
+                    } else if (constraint.includes('deposit_percent_check')) {
+                        errorMessage = 'Phần trăm cọc không hợp lệ';
+                    } else if (constraint.includes('valid_value_range')) {
+                        errorMessage = 'Giá trị Min phải nhỏ hơn hoặc bằng Max';
+                    } else if (constraint.includes('valid_tier_range')) {
+                        errorMessage = 'Khoảng giá trị không hợp lệ (Min > Max)';
+                    } else {
+                        errorMessage = `Lỗi ràng buộc: ${constraint}`;
+                    }
+                } else {
+                    // Generic error message
+                    errorMessage = error.message || 'Lỗi không xác định';
+                }
+            }
+
+            toast.error(errorMessage);
         }
     });
 
@@ -450,7 +521,7 @@ export default function AdminPricingPage() {
                                     key={resetKey}
                                     data={tmdtShippingData}
                                     onDataChange={handleTmdtUpdate}
-                                    showFeeColumn={false}
+                                    showFeeColumn={true}
                                     title="Line TMĐT"
                                     color="red"
                                 />

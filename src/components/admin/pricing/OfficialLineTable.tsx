@@ -4,6 +4,7 @@ import { NumericFormat } from 'react-number-format';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ShippingRateRule } from "@/types/database.types";
+import { v4 as uuidv4 } from 'uuid';
 
 interface OfficialLineTableProps {
     rules: ShippingRateRule[];
@@ -146,17 +147,28 @@ export function OfficialLineTable({ rules, onDataChange }: OfficialLineTableProp
     const { fields: heavyFields, append: appendHeavy, remove: removeHeavy } = useFieldArray({ control, name: 'heavy' });
     const { fields: bulkyFields, append: appendBulky, remove: removeBulky } = useFieldArray({ control, name: 'bulky' });
 
-    // Initial Load / Sync REMOVED to prevent infinite loop.
-    // Parent should control re-initialization via the 'key' prop.
-    /*
+    // Initial Load / Sync with Deep Comparison to avoid loops
     useEffect(() => {
-        // Prevent infinite loops but update if parent data changes significantly (e.g. after reset)
-        // Simple check: defaultValues usually empty on first render if data not ready
-        if (heavyRows.length > 0 || bulkyRows.length > 0) {
-            reset({ heavy: heavyRows, bulky: bulkyRows });
+        const currentData = { heavy: heavyRows, bulky: bulkyRows };
+        // Simple JSON stringify comparison is sufficient for this data structure
+        const formValues = { heavy: watch('heavy'), bulky: watch('bulky') };
+
+        // Only reset if strict deep equality fails, to prevent typing interruption
+        // We compare simplified versions to avoid issues with undefined vs null
+        if (JSON.stringify(currentData) !== JSON.stringify(formValues)) {
+            // Check if it's just a user typing change (local state newer) vs server update
+            // For now, we prioritize server alignment on mount/remount (controlled by parent key)
+            // But if we want real-time sync, we need careful logic. 
+            // The safest approach here is to rely on Parent 'key' prop to force re-mount on Reset.
+            // But if we want to support real-time updates from other users, we'd need this.
+            // For this specific 'Edit' context, we only strictly enforce it if the form is empty
+            if (heavyFields.length === 0 && heavyRows.length > 0) {
+                reset({ heavy: heavyRows, bulky: bulkyRows });
+            } else if (bulkyFields.length === 0 && bulkyRows.length > 0) {
+                reset({ heavy: heavyRows, bulky: bulkyRows });
+            }
         }
-    }, [heavyRows, bulkyRows, reset]);
-    */
+    }, [heavyRows, bulkyRows, reset, heavyFields.length, bulkyFields.length]); // Dependencies tuned
 
     // Data Binding
     useEffect(() => {
@@ -165,58 +177,60 @@ export function OfficialLineTable({ rules, onDataChange }: OfficialLineTableProp
 
             // Heavy
             value.heavy?.forEach((r: any) => {
+                const hasValue = r.price_hn > 0 || r.price_hcm > 0 || r.min_value >= 0 || r.max_value > 0;
+                if (!hasValue) return;
+
                 // HN
-                if (r) {
-                    flattened.push({
-                        id: r.id_hn,
-                        method: 'ChinhNgach',
-                        type: 'weight_based',
-                        subtype: 'heavy',
-                        warehouse: 'HN',
-                        min_value: Number(r.min_value || 0),
-                        max_value: Number(r.max_value || 0),
-                        price: Number(r.price_hn || 0)
-                    } as any as ShippingRateRule);
-                    // HCM
-                    flattened.push({
-                        id: r.id_hcm,
-                        method: 'ChinhNgach',
-                        type: 'weight_based',
-                        subtype: 'heavy',
-                        warehouse: 'HCM',
-                        min_value: Number(r.min_value || 0),
-                        max_value: Number(r.max_value || 0),
-                        price: Number(r.price_hcm || 0)
-                    } as any as ShippingRateRule);
-                }
+                flattened.push({
+                    id: r.id_hn || uuidv4(), // Fail-safe
+                    method: 'ChinhNgach',
+                    type: 'weight_based',
+                    subtype: 'heavy',
+                    warehouse: 'HN',
+                    min_value: Number(r.min_value || 0),
+                    max_value: Number(r.max_value || 0),
+                    price: Number(r.price_hn || 0)
+                } as any as ShippingRateRule);
+                // HCM
+                flattened.push({
+                    id: r.id_hcm || uuidv4(), // Fail-safe
+                    method: 'ChinhNgach',
+                    type: 'weight_based',
+                    subtype: 'heavy',
+                    warehouse: 'HCM',
+                    min_value: Number(r.min_value || 0),
+                    max_value: Number(r.max_value || 0),
+                    price: Number(r.price_hcm || 0)
+                } as any as ShippingRateRule);
             });
 
             // Bulky
             value.bulky?.forEach((r: any) => {
+                const hasValue = r.price_hn > 0 || r.price_hcm > 0 || r.min_value >= 0 || r.max_value > 0;
+                if (!hasValue) return;
+
                 // HN
-                if (r) {
-                    flattened.push({
-                        id: r.id_hn,
-                        method: 'ChinhNgach',
-                        type: 'volume_based',
-                        subtype: 'bulky',
-                        warehouse: 'HN',
-                        min_value: Number(r.min_value || 0),
-                        max_value: Number(r.max_value || 0),
-                        price: Number(r.price_hn || 0)
-                    } as any as ShippingRateRule);
-                    // HCM
-                    flattened.push({
-                        id: r.id_hcm,
-                        method: 'ChinhNgach',
-                        type: 'volume_based',
-                        subtype: 'bulky',
-                        warehouse: 'HCM',
-                        min_value: Number(r.min_value || 0),
-                        max_value: Number(r.max_value || 0),
-                        price: Number(r.price_hcm || 0)
-                    } as any as ShippingRateRule);
-                }
+                flattened.push({
+                    id: r.id_hn || uuidv4(), // Fail-safe
+                    method: 'ChinhNgach',
+                    type: 'volume_based',
+                    subtype: 'bulky',
+                    warehouse: 'HN',
+                    min_value: Number(r.min_value || 0),
+                    max_value: Number(r.max_value || 0),
+                    price: Number(r.price_hn || 0)
+                } as any as ShippingRateRule);
+                // HCM
+                flattened.push({
+                    id: r.id_hcm || uuidv4(), // Fail-safe
+                    method: 'ChinhNgach',
+                    type: 'volume_based',
+                    subtype: 'bulky',
+                    warehouse: 'HCM',
+                    min_value: Number(r.min_value || 0),
+                    max_value: Number(r.max_value || 0),
+                    price: Number(r.price_hcm || 0)
+                } as any as ShippingRateRule);
             });
 
             onDataChange(flattened);
@@ -259,7 +273,19 @@ export function OfficialLineTable({ rules, onDataChange }: OfficialLineTableProp
                     </div>
 
                     <div className="p-3 bg-gray-50 border-t border-gray-100 text-center">
-                        <Button variant="outline" size="sm" onClick={() => appendHeavy({ min_value: 0, max_value: 0, price_hn: 0, price_hcm: 0 })} className="w-full border-dashed">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => appendHeavy({
+                                min_value: 0,
+                                max_value: 0,
+                                price_hn: 0,
+                                price_hcm: 0,
+                                id_hn: uuidv4(),
+                                id_hcm: uuidv4()
+                            })}
+                            className="w-full border-dashed"
+                        >
                             <Plus size={14} className="mr-1" /> Thêm khoảng cân nặng
                         </Button>
                     </div>
@@ -296,7 +322,19 @@ export function OfficialLineTable({ rules, onDataChange }: OfficialLineTableProp
                     </div>
 
                     <div className="p-3 bg-gray-50 border-t border-gray-100 text-center">
-                        <Button variant="outline" size="sm" onClick={() => appendBulky({ min_value: 0, max_value: 0, price_hn: 0, price_hcm: 0 })} className="w-full border-dashed">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => appendBulky({
+                                min_value: 0,
+                                max_value: 0,
+                                price_hn: 0,
+                                price_hcm: 0,
+                                id_hn: uuidv4(),
+                                id_hcm: uuidv4()
+                            })}
+                            className="w-full border-dashed"
+                        >
                             <Plus size={14} className="mr-1" /> Thêm khoảng thể tích
                         </Button>
                     </div>

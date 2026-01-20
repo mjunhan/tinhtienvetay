@@ -23,7 +23,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         whileFocus={{ scale: 1.01 }} // Subtle scale up
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                         className={cn(
-                            "w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors",
+                            "w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
                             error && "border-red-400 focus:ring-red-100 focus:border-red-400",
                             suffix && "pr-10",
                             className

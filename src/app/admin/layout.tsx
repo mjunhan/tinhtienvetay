@@ -86,17 +86,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             >
                 {/* Logo */}
                 <div className="p-6 border-b border-slate-800">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
+                    <h1 className="text-xl font-bold text-amber-500">
                         TÍNH TIỀN VỀ TAY
                     </h1>
-                    <p className="text-sm text-slate-400 mt-1">Admin Dashboard v0.4.2</p>
+                    <p className="text-sm text-slate-400 mt-1">Admin Dashboard v0.5.0</p>
                 </div>
 
                 {/* User Info */}
                 {userEmail && (
-                    <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-800">
-                        <p className="text-xs text-slate-400">Đăng nhập với</p>
-                        <p className="text-sm font-medium text-amber-50 truncate">{userEmail}</p>
+                    <div className="px-6 py-4 bg-slate-800/30 border-b border-slate-800">
+                        <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Đăng nhập với</p>
+                        <p className="text-sm font-medium text-slate-200 truncate mt-1">{userEmail}</p>
                     </div>
                 )}
 
@@ -111,16 +111,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                                 key={item.href}
                                 href={item.href}
                                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                  flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all group relative
                   ${isActive
-                                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-900/20'
-                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                        ? 'bg-amber-500/10 text-amber-500' // Specified Active State
+                                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
                                     }
                 `}
                                 onClick={() => setIsSidebarOpen(false)}
                             >
-                                <Icon size={20} />
-                                <span className="font-medium">{item.label}</span>
+                                {isActive && (
+                                    <div className="absolute right-0 top-0 bottom-0 w-1 bg-amber-500 rounded-l-full" />
+                                )}
+                                <Icon size={20} className={isActive ? "text-amber-500" : "text-slate-500 group-hover:text-slate-300"} />
+                                <span>{item.label}</span>
                             </a>
                         );
                     })}
@@ -130,17 +133,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800 bg-slate-900">
                     <a
                         href="/"
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 transition-all mb-1"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all mb-1 text-sm font-medium"
                     >
                         <ArrowLeft size={20} />
-                        <span className="font-medium">Về Trang Chủ</span>
+                        <span>Về Trang Chủ</span>
                     </a>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-900/20 transition-all"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all text-sm font-medium"
                     >
                         <LogOut size={20} />
-                        <span className="font-medium">Đăng xuất</span>
+                        <span>Đăng xuất</span>
                     </button>
                 </div>
             </aside>

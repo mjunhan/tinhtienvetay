@@ -2,13 +2,13 @@
 export const DEFAULT_SERVICE_FEES = [
     // 0 - 2M
     { min_order_value: 0, max_order_value: 2000000, deposit_percent: 70, fee_percent: 5, method: 'TieuNgach' },
-    { min_order_value: 0, max_order_value: 2000000, deposit_percent: 100, fee_percent: 3, method: 'TieuNgach' },
+    { min_order_value: 0, max_order_value: 2000000, deposit_percent: 80, fee_percent: 3, method: 'TieuNgach' },
     // 2M - 10M
     { min_order_value: 2000000, max_order_value: 10000000, deposit_percent: 70, fee_percent: 4, method: 'TieuNgach' },
-    { min_order_value: 2000000, max_order_value: 10000000, deposit_percent: 100, fee_percent: 2.5, method: 'TieuNgach' },
+    { min_order_value: 2000000, max_order_value: 10000000, deposit_percent: 80, fee_percent: 2.5, method: 'TieuNgach' },
     // > 10M
     { min_order_value: 10000000, max_order_value: 999999999, deposit_percent: 70, fee_percent: 3, method: 'TieuNgach' },
-    { min_order_value: 10000000, max_order_value: 999999999, deposit_percent: 100, fee_percent: 2, method: 'TieuNgach' },
+    { min_order_value: 10000000, max_order_value: 999999999, deposit_percent: 80, fee_percent: 2, method: 'TieuNgach' },
 ];
 
 export const DEFAULT_OFFICIAL_RATES = [
